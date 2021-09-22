@@ -1,4 +1,4 @@
-﻿#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #define GLEW_ENABLE_EXPERIMENTAL
 #include <GL/glew.h>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -16,19 +16,8 @@
 #include <XsLib.hpp>
 #define WIDTH 1200
 #define HEIGHT 700
-#define s static
-#define glCol glColor3f
-#define glCol4 glColor4f
-#define glBeg glBegin
-#define glL glLoadIdentity
-#define im ImGui
-using namespace std;
 #include "XsEngine.hpp"
 XsShape v;
-
-void myfunc() {
-
-};
 
 int main(int argc, char* argv[]) {
     XsLib engine("oyun motoru");
