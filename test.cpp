@@ -21,8 +21,8 @@ XsShape v;
 
 int main(int argc, char* argv[]) {
     XsLib engine("oyun motoru");
-    XsVertices plane_vert = XsOBJLoader("data/magic.obj", XS_VERTEX);
-    engine << plane_vert;
+    XsVertices cube_vert = XsOBJLoader("data/magic.obj", XS_VERTEX);
+    engine << cube_vert;
     engine << v;
     engine << v;
 
