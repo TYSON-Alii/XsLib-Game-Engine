@@ -1,4 +1,20 @@
-﻿class XsLib;
+#define s static
+#define glCol glColor3f
+#define glCol4 glColor4f
+#define glBeg glBegin
+#define glL glLoadIdentity
+#define im ImGui
+using namespace std;
+
+v3f XsHexToRGB(int hex) {
+    v3f _t;
+    _t.x = ((hex >> 16) & 0xff) / 255.f;
+    _t.y = ((hex >> 8) & 0xff) / 255.f;
+    _t.z = ((hex) & 0xff) / 255.f;
+    return _t;
+};
+
+class XsLib;
 class XsLib {
 public:
     struct push_t {
@@ -129,7 +145,7 @@ private:
         glDepthMask(GL_TRUE);
     };
 
-    v2f cam_rot = 300;
+    v2f cam_rot = v2f(0, 300);
     v2f cam_vel = 0;
     v2f last_mouse_pos = 0, plast_mouse_pos = 0;
     bool mouse_press = false;
@@ -138,14 +154,28 @@ private:
     vex3f speed = 0;
     vex2f mouse_pos = 0;
 
+    float speed_x = 100.f;
+
     void camera_sett() {
         camera.viewport = vex2f(window.getSize().x, window.getSize().y);
         if (game_mode) {
             if (XsIsKeyPressed(XS_MOUSE_RIGHT)) {
+                if (event.type == sf::Event::MouseWheelMoved) {
+                    cout << speed_x << '\n';
+                    speed_x += (float)event.mouseWheel.delta * 10;
+                    if (speed_x < 20)
+                        speed_x = 20;
+                    b_c_speed = true;
+                    c_speed.restart();
+                }
+                else {
+                    if (c_speed.getMilliSeconds() > 2.f)
+                        b_c_speed = false;
+                };
                 if (XsIsKeyPressed(XS_KEY_W) && !XsIsKeyPressed(XS_KEY_SPACE))
-                    speed += camera.rot * 0.01f;
+                    speed += camera.rot * (1.f / speed_x);
                 else if (XsIsKeyPressed(XS_KEY_S) && !XsIsKeyPressed(XS_KEY_SPACE))
-                    speed -= camera.rot * 0.01f;
+                    speed -= camera.rot * (1.f / speed_x);
                 if (mouse_press == false) {
                     last_mouse_pos = mouse_pos;
                     mouse_press = true;
@@ -154,10 +184,15 @@ private:
                 v2f sm_pos = cam_rot + f_pos;
                 cam_vel = (sm_pos - cam_rot) / 17.5;
                 last_mouse_pos += cam_vel;
+
+                b_c_move = true;
+                c_move.restart();
             }
             else {
+                if (c_move.getMilliSeconds() > 2.f)
+                    b_c_move = false;
                 mouse_press = false;
-            }
+            };
             if (!XsIsKeyPressed(XS_KEY_S) && !XsIsKeyPressed(XS_KEY_W))
                 speed *= 0.95;
             if (XsIsKeyPressed(XS_KEY_SPACE))
@@ -165,7 +200,7 @@ private:
             camera.pos += speed;
             cam_vel *= 0.88;
             cam_rot += cam_vel;
-        };
+        }
         XsFPSCamera(camera, cam_rot - vex2f(0, 300), 0.3);
     };
 
@@ -191,6 +226,7 @@ private:
         int xs_vert = 0;
         int gl_vert = 0;
         int s_texture = 0;
+        int s_solid = 0;
         float s_point = 1;
         float w_line = 1;
         string name;
@@ -203,20 +239,52 @@ private:
     bool b_vert = false;
     int s_vert = -1;
     vector<Vertices_t> vertices;
-    vector<char*> vert_name = {_strdup("none")};
+    vector<char*> vert_name = {_strdup("none"), _strdup("solid")};
 
     const const char* xs_vert_types[4]{ "vertex", "vertex and texture", "vertex and normal", "all" };
     const const char* gl_vert_types[5]{ "points", "lines", "triangles", "quads", "polygon" };
+    const const char* solid_types[10]{ "cube", "prism", "sphere", "cylinder", "cone", "ico sphere", "torus", "teapot", "star", "monke", };
     
     string input_text;
     const const char* file_format[3]{ "default", "obj", "xs.model" };
     int c_file_format = 0;
 
+    float fps = 1.f;
+    std::chrono::high_resolution_clock::time_point s_fps;
+
+    XsChrono c_speed;
+    bool b_c_speed = false;
+
+    XsChrono c_move;
+    bool b_c_move = false;
     void ui() {
-        im::Begin("Environment", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+        im::Begin("general settings", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
+        im::SetWindowPos({ camera.viewport.x / 10, -5 });
+        im::SetWindowSize({ 300, 200 });
+        im::Text(WindowName);
+        if (b_c_move) {
+            im::Text(string(string("pos x: ") + to_string(int(camera.pos.x)) + " y: " + to_string(int(camera.pos.y)) + " z: " + to_string(int(camera.pos.z))).c_str());
+            im::Text(string(string("rot x: ") + to_string(camera.rot.x) + " y: " + to_string(camera.rot.y) + " z: " + to_string(camera.rot.z)).c_str());
+        };
+        if (b_c_speed)
+            im::Text(string(string("camera speed: ") + str(speed_x)).c_str());
+        im::PushStyleColor(ImGuiCol_Text, ImVec4(XsYellow.x, XsYellow.y, XsYellow.z, 0.76));
+        im::Text(string(string("fps: ") + to_string(int(fps))).c_str());
+        im::PopStyleColor();
+        im::End();
+
+        im::Begin("Environment", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
         im::SetWindowPos({ 0, 0 });
         im::SetWindowSize({camera.viewport.x / 10, camera.viewport.y + 20});
         if (im::CollapsingHeader("Shapes")) {
+            if (im::Selectable("Create New 3D Shape")) {
+                Shape_t _t;
+                _t.name = string("Shape ") + str(leftshapenum);
+                _t.sh = XsShape();
+                shapes.push_back(_t);
+                leftshapenum++;
+                Log << "Add a 3D Shape";
+            };
             for (size_t i = 0; i < shapes.size(); i++)
                 if (im::Selectable(string(str(i == s_shape ? "+ " : "- ") + shapes[i].name).c_str(), i == s_shape ? true : false)) {
                     if (i != s_shape) {
@@ -242,16 +310,20 @@ private:
         }
         im::End();
         if (s_shape > -1) {
-            im::Begin(shapes[s_shape].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+            im::Begin(shapes[s_shape].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
             im::SetWindowPos({ camera.viewport.x - ImGui::GetWindowSize().x, 0 });
             im::SetWindowSize({ camera.viewport.x / 5.f, camera.viewport.y + 20 });
             im::InputText("Name", &shapes[s_shape].name);
             XsInfo(shapes[s_shape].sh);
             char** _tsv = &vert_name[0];
             im::Combo("Vertices", &shapes[s_shape].s_vert, _tsv, vert_name.size());
-            if (shapes[s_shape].s_vert != 0) {
+            if (shapes[s_shape].s_vert > 1) {
                 im::Combo("Xs Mode", &shapes[s_shape].xs_vert, xs_vert_types, 4);
                 im::Combo("GL Mode", &shapes[s_shape].gl_vert, gl_vert_types, 5);
+            }
+            elif (shapes[s_shape].s_vert == 1) {
+                im::Combo("Solid Type", &shapes[s_shape].s_solid, solid_types, 10);
+                im::Combo("Xs Mode", &shapes[s_shape].xs_vert, xs_vert_types, 4);
             };
 
             im::End();
@@ -271,9 +343,9 @@ private:
             im::End();
         }
 
-        im::Begin("Log", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+        im::Begin("Log", (bool*)0, ImGuiWindowFlags_NoMove);
         im::SetWindowPos({ camera.viewport.x / 10, camera.viewport.y - (ImGui::GetWindowSize().y) + 20 });
-        im::SetWindowSize({ s_shape != -1 ? camera.viewport.x - camera.viewport.x / 10 - camera.viewport.x / 5 : camera.viewport.x - camera.viewport.x / 10, ImGui::GetWindowSize().y });
+        im::SetWindowSize({ s_shape != -1 ? camera.viewport.x - camera.viewport.x / 10 - camera.viewport.x / 5 : camera.viewport.x - camera.viewport.x / 10, (ImGui::GetWindowSize().y > camera.viewport.y / 1.01) ? float(camera.viewport.y / 1.01) : float(ImGui::GetWindowSize().y) });
         for (auto& i : Log.data) {
             im::PushStyleColor(ImGuiCol_Text, ImVec4(i.color.x, i.color.y, i.color.z, 1));
             im::Text(i.text_cstr());
@@ -289,8 +361,25 @@ private:
     volatile bool game_mode = true;
     XsEnum f_XsEnum(int v) { return v == 0 ? XS_VERTEX : v == 1 ? XS_VERTEX_AND_TEXTURE : v == 2 ? XS_VERTEX_AND_NORMAL : XS_ALL; };
     GLenum f_GLenum(int v) { return v == 0 ? GL_POINTS : v == 1 ? GL_LINES : v == 2 ? GL_TRIANGLES : v == 3 ? GL_QUADS : GL_POLYGON; };
+    XsSolidType f_SolidType(int v) {
+        switch (v) {
+        case 0: return XS_CUBE; break;
+        case 1: return XS_PRISM; break;
+        case 2: return XS_SPHERE; break;
+        case 3: return XS_CYLINDER; break;
+        case 4: return XS_CONE; break;
+        case 5: return XS_ICOSPHERE; break;
+        case 6: return XS_TORUS; break;
+        case 7: return XS_TEAPOT; break;
+        case 8: return XS_STAR; break;
+        case 9: return XS_MONKE; break;
+        };
+    };
 
     const char* WindowName = "";
+
+    ImVec4 ximColor(v3f v) { return ImVec4(v.x, v.y, v.z, 1.f); };
+    ImVec4 ximColor(v3f v, float va) { return ImVec4(v.x, v.y, v.z, va); };
 public:
     XsCamera camera;
     sf::RenderWindow window;
@@ -326,6 +415,54 @@ public:
         camera.pos = vex3f(-20, 20, 0);
 
         floor_shader = XsShader(floor_shader_vs, floor_shader_fs);
+    
+        ImVec4 im_pink =    ximColor(XsHexToRGB(0xd94e6a));
+        ImVec4 im_pink2 =   ximColor(XsHexToRGB(0xc23e64));
+        ImVec4 im_blue =    ximColor(XsHexToRGB(0x4a7a96));
+        ImVec4 im_blue2 =   ximColor(XsHexToRGB(0x333f58));
+        ImVec4 im_black =   ximColor(XsHexToRGB(0x292831));
+        ImVec4 im_purple =  ximColor(XsHexToRGB(0x1f1935));
+        ImVec4 im_dred =    ximColor(XsHexToRGB(0x49111c));
+        ImVec4 im_dred2 =   ximColor(XsHexToRGB(0x6c1d2d));
+        ImVec4 im_purple2 = ximColor(XsHexToRGB(0x5e2baf));
+        ImVec4 im_purple3 = ximColor(XsHexToRGB(0x734ed9));
+        {
+            ImGuiStyle* style = &im::GetStyle();
+            style->Colors[ImGuiCol_TitleBg] = im_black;
+            style->Colors[ImGuiCol_TitleBgActive] = im_black;
+            style->Colors[ImGuiCol_TitleBgCollapsed] = im_black;
+            style->Colors[ImGuiCol_Button] = im_dred;
+            style->Colors[ImGuiCol_ButtonActive] = im_dred2;
+            style->Colors[ImGuiCol_ButtonHovered] = im_dred2;
+            style->Colors[ImGuiCol_FrameBg] = im_purple;
+            style->Colors[ImGuiCol_FrameBgActive] = im_purple3;
+            style->Colors[ImGuiCol_FrameBgHovered] = im_purple2;
+            style->Colors[ImGuiCol_SliderGrab] = im_purple3;
+            style->Colors[ImGuiCol_SliderGrabActive] = im_purple2;
+            style->Colors[ImGuiCol_Header] = im_purple;
+            style->Colors[ImGuiCol_HeaderActive] = im_purple3;
+            style->Colors[ImGuiCol_HeaderHovered] = im_purple2;
+            style->Colors[ImGuiCol_CheckMark] = ImVec4(0.82f, 0.42f, 0.48f, 1.00f);
+            style->Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.91f, 0.52f, 0.64f, 0.78f);
+            style->Colors[ImGuiCol_SeparatorActive] = ImVec4(0.67f, 0.64f, 0.81f, 1.00f);
+            style->Colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.02f, 0.04f, 0.20f);
+            style->Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.41f, 0.41f, 0.41f, 0.67f);
+            style->Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.35f, 0.35f, 0.35f, 0.95f);
+            style->Colors[ImGuiCol_Tab] = ImVec4(0.28f, 0.17f, 0.44f, 0.86f);
+            style->Colors[ImGuiCol_TabHovered] = ImVec4(0.28f, 0.16f, 0.71f, 0.80f);
+            style->Colors[ImGuiCol_TabActive] = ImVec4(0.10f, 0.06f, 0.24f, 1.00f);
+            style->Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.30f, 0.26f, 0.39f, 1.00f);
+            style->Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.64f, 0.78f, 0.94f, 0.35f);
+            style->Colors[ImGuiCol_NavHighlight] = ImVec4(0.69f, 0.79f, 0.90f, 1.00f);
+            style->Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 0.98f);
+            style->Colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 0.91f);
+            style->Colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.56f);
+            style->Colors[ImGuiCol_TitleBg] = ImVec4(0.16f, 0.16f, 0.19f, 0.94f);
+            style->Colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.16f, 0.19f, 0.96f);
+            style->Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.16f, 0.16f, 0.19f, 0.98f);
+            style->Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.64f, 0.78f, 0.94f, 0.35f);
+            style->Colors[ImGuiCol_NavHighlight] = ImVec4(0.69f, 0.79f, 0.90f, 1.00f);
+        }
     };
     vector<push_t> Pushs() { return pushs; };
     /*
@@ -381,6 +518,7 @@ public:
     */
     void Draw() {
         while (window.isOpen()) {
+            s_fps = std::chrono::high_resolution_clock::now();
             for (auto& i : pushs)
                 if (i.code == "before clear") {
                     i.push_data();
@@ -418,9 +556,13 @@ public:
 
 
             for (auto& i : shapes) {
-                if (i.s_vert != 0) {
+                if (i.s_vert > 1) {
                     glL();
-                    i.sh.draw(vertices[i.s_vert - 1].vr, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
+                    i.sh.draw(vertices[i.s_vert - 2].vr, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
+                }
+                elif(i.s_vert == 1) {
+                    glL();
+                    i.sh.draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
                 }
             };
 
@@ -444,9 +586,7 @@ public:
             ImGui::SFML::Render(window);
             window.popGLStates();
             window.display();
+            fps = (float)1e9 / (float)std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - s_fps).count();
         };
     };
 };
-
-
-
