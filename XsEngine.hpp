@@ -257,6 +257,8 @@ private:
 
     XsChrono c_move;
     bool b_c_move = false;
+    
+    bool s_del = false;
     void ui() {
         im::Begin("general settings", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
         im::SetWindowPos({ camera.viewport.x / 10, -5 });
@@ -276,15 +278,25 @@ private:
         im::Begin("Environment", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
         im::SetWindowPos({ 0, 0 });
         im::SetWindowSize({camera.viewport.x / 10, camera.viewport.y + 20});
-        if (im::CollapsingHeader("Shapes")) {
-            if (im::Selectable("Create New 3D Shape")) {
+
+        if (im::CollapsingHeader("New")) {
+            if (im::Selectable("3D Shape")) {
                 Shape_t _t;
                 _t.name = string("Shape ") + str(leftshapenum);
                 _t.sh = XsShape();
                 shapes.push_back(_t);
                 leftshapenum++;
-                Log << "Add a 3D Shape";
+                Log << "Create a 3D Shape";
             };
+            if (im::Selectable("Vertices  ")) {
+                Vertices_t _t;
+                _t.name = string("Vertices ") + str(leftvertnum);
+                vertices.push_back(_t);
+                leftvertnum++;
+                Log << "Create a Vertices";
+            };
+        };
+        if (im::CollapsingHeader("Shapes")) {
             for (size_t i = 0; i < shapes.size(); i++)
                 if (im::Selectable(string(str(i == s_shape ? "+ " : "- ") + shapes[i].name).c_str(), i == s_shape ? true : false)) {
                     if (i != s_shape) {
@@ -325,8 +337,50 @@ private:
                 im::Combo("Solid Type", &shapes[s_shape].s_solid, solid_types, 10);
                 im::Combo("Xs Mode", &shapes[s_shape].xs_vert, xs_vert_types, 4);
             };
-
+            auto t_nthm = &im::GetStyle();
+            auto _thm = im::GetStyle();
+            t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
+            t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
+            t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
+            if (im::Button("Delete")) {
+                if (XsIsKeyPressed(XS_KEY_SHIFT)) {
+                    shapes.erase(shapes.begin() + s_shape);
+                    s_shape = -1;
+                }
+                else
+                    s_del = true;
+            }
+            *t_nthm = _thm;
             im::End();
+            
+            if (s_del) {
+                s_vert = -1;
+                im::Begin(WindowName, (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+                im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+                im::SetWindowSize({ 350, 105 });
+                im::Text("A shape will be deleted, do you confirm?");
+                im::Text(" ");
+                im::Text(" ");
+                auto t_nthm = &im::GetStyle();
+                auto _thm = im::GetStyle();
+                t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.726);
+                t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.886);
+                t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.986);
+                if (im::Button("Nop   "))
+                    s_del = false;
+
+                t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
+                t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
+                t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
+                im::SameLine(ImGui::GetWindowSize().x - 50, -100);
+                if (im::Button("Yep    ")) {
+                    shapes.erase(shapes.begin() + s_shape);
+                    s_del = false;
+                    s_shape = -1;
+                };
+                *t_nthm = _thm;
+                im::End();
+            };
         }
         elif(s_vert > -1) {
             im::Begin(vertices[s_vert].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
@@ -496,7 +550,7 @@ public:
         vert_name.push_back(_strdup(_t.name.c_str()));
         vertices.push_back(_t);
         leftvertnum++;
-        Log << "Add Vertices";
+        Log << "Add a Vertices";
     };
     /*void Add(auto& v, const char* name) {
         Shape_t _t;
@@ -590,3 +644,6 @@ public:
         };
     };
 };
+
+
+
