@@ -300,6 +300,9 @@ private:
         if (im::Selectable("New")) {
             n_w = true;
             s_del = false;
+            s_tex = -1;
+            s_vert = -1;
+            s_tool = -1;
             nw_t = -1;
         };
         if (im::CollapsingHeader("Shapes")) {
@@ -315,6 +318,9 @@ private:
                     };
                     s_vert = -1;
                     s_tex = -1;
+                    s_del = false;
+                    n_w = false;
+                    s_tool = -1;
                 };
         }
         if (im::CollapsingHeader("Vertices")) {
@@ -326,6 +332,9 @@ private:
                         s_vert = -1;
                     s_shape = -1;
                     s_tex = -1;
+                    s_del = false;
+                    n_w = false;
+                    s_tool = -1;
                 };
         }
         if (im::CollapsingHeader("Textures")) {
@@ -337,6 +346,9 @@ private:
                         s_tex = -1;
                     s_shape = -1;
                     s_vert = -1;
+                    s_del = false;
+                    n_w = false;
+                    s_tool = -1;
                 };
         }
         im::End();
@@ -370,6 +382,9 @@ private:
                     shapes.erase(shapes.begin() + s_shape);
                     shape_name.erase(shape_name.begin() + s_shape);
                     s_shape = -1;
+                    s_tex = -1;
+                    n_w = false;
+                    s_tool = -1;
                 }
                 else
                     s_del = true;
@@ -610,6 +625,57 @@ private:
         };
     }
 
+    bool _tool = false;
+    int s_tool = -1;
+    string _notepad;
+    void otherui() {
+        im::Begin("dsafbdjagvfa", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
+        im::SetWindowPos({ camera.viewport.x - ((s_shape != -1) ? (camera.viewport.x / 5.f) : 0.f) - 55, -5 });
+        im::SetWindowSize({ 100, 100 });
+        if (im::Button("Tools")) {
+            s_tex = -1;
+            s_vert = -1;
+            s_tool = -1;
+            n_w = false;
+            _tool = !_tool;
+        };
+        im::End();
+
+        if (_tool) {
+            im::Begin("Tools ", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+            im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+            im::SetWindowSize({ 250, 300 });
+            if (im::Button("Calculator", { 230, 0 })) {
+                s_tool = 0;
+                _tool = false;
+            };
+            if (im::Button("Notepad", { 230, 0 })) {
+                s_tool = 1;
+                _tool = false;
+            };
+            auto t_nthm = &im::GetStyle();
+            auto _thm = im::GetStyle();
+            t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
+            t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
+            t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
+            if (im::Button("Cancel", { 230, 0 })) {
+                _tool = false;
+                s_tool = -1;
+            };
+            *t_nthm = _thm;
+            im::End();
+        };
+        if (s_tool > -1) {
+            if (s_tool == 1) {
+                im::Begin("Notepad  ", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+                im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+                im::SetWindowSize({ 300, 150 });
+                im::InputTextMultiline("Notepad  ", &_notepad);
+                im::End();
+            };
+        };
+    };
+
     float d_yaw = 0, d_pitch = 0;
     void xsui() {
     //    p_sett.screenSize = camera.viewport;
@@ -668,6 +734,9 @@ public:
         window.create(sf::VideoMode(WIDTH, HEIGHT), WindowName, sf::Style::Default, csett);
         Log << "Create window.";
         ImGui::SFML::Init(window);
+        ImGui::GetIO().Fonts->Clear();
+        ImGui::GetIO().Fonts->AddFontFromFileTTF("font.ttf", 18.f);
+        ImGui::SFML::UpdateFontTexture();
         glewInit();
         glEnable(GL_SCISSOR_TEST);
         glEnable(GL_DEPTH_TEST);
@@ -873,16 +942,19 @@ public:
                 xsui();
 
             ImGui::SFML::Update(window, imclock.restart());
+            ImGuizmo::BeginFrame();
 
-            if (game_mode)
+            if (game_mode) {
                 ui();
+                otherui();
+            };
 
             for (auto& i : pushs)
                 if (i.code == "in imgui") {
                     i.push_data();
                     break;
                 };
-
+            
             window.pushGLStates();
             ImGui::SFML::Render(window);
             window.popGLStates();
@@ -891,6 +963,3 @@ public:
         };
     };
 };
-
-
-
