@@ -276,405 +276,19 @@ private:
     int s_nv = 0;
     int s_nt = 0;
 
+    struct Select_t {
+        string type = "none";
+        int num = -1;
+    };
+    Select_t selected;
+
     int lt_f = 0, lt_w = 0, lt_t = 0;
-    void ui() {
-        im::Begin("general settings", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
-        im::SetWindowPos({ camera.viewport.x / 10, -5 });
-        im::SetWindowSize({ 300, 200 });
-        im::Text(WindowName);
-        if (b_c_move) {
-            im::Text(string(string("pos x: ") + to_string(int(camera.pos.x)) + " y: " + to_string(int(camera.pos.y)) + " z: " + to_string(int(camera.pos.z))).c_str());
-            im::Text(string(string("rot x: ") + to_string(camera.rot.x) + " y: " + to_string(camera.rot.y) + " z: " + to_string(camera.rot.z)).c_str());
-        };
-        if (b_c_speed)
-            im::Text(string(string("camera speed: ") + str(speed_x)).c_str());
-        im::PushStyleColor(ImGuiCol_Text, ImVec4(XsYellow.x, XsYellow.y, XsYellow.z, 0.76));
-        im::Text(string(string("fps: ") + to_string(int(fps))).c_str());
-        im::PopStyleColor();
-        im::End();
-
-        im::Begin("Environment", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-        im::SetWindowPos({ 0, 0 });
-        im::SetWindowSize({camera.viewport.x / 10, camera.viewport.y});
-
-        if (im::Selectable("New")) {
-            n_w = true;
-            s_del = false;
-            s_tex = -1;
-            s_vert = -1;
-            s_tool = -1;
-            nw_t = -1;
-        };
-        if (im::CollapsingHeader("Shapes")) {
-            for (size_t i = 0; i < shapes.size(); i++)
-                if (im::Selectable(string(str(i == s_shape ? "+ " : "- ") + shapes[i].name).c_str(), i == s_shape ? true : false)) {
-                    if (i != s_shape) {
-                        s_shape = i;
-                        Log << "Select a 3D Shape";
-                    }
-                    else {
-                        s_shape = -1;
-                        Log << "Un-Select 3D Shape";
-                    };
-                    s_vert = -1;
-                    s_tex = -1;
-                    s_del = false;
-                    n_w = false;
-                    s_tool = -1;
-                };
-        }
-        if (im::CollapsingHeader("Vertices")) {
-            for (size_t i = 0; i < vertices.size(); i++)
-                if (im::Selectable(string(str(i == s_vert ? "+ " : "- ") + vertices[i].name).c_str(), i == s_vert ? true : false)) {
-                    if (i != s_vert)
-                        s_vert = i;
-                    else
-                        s_vert = -1;
-                    s_shape = -1;
-                    s_tex = -1;
-                    s_del = false;
-                    n_w = false;
-                    s_tool = -1;
-                };
-        }
-        if (im::CollapsingHeader("Textures")) {
-            for (size_t i = 0; i < textures.size(); i++)
-                if (im::Selectable(string(str(i == s_tex ? "+ " : "- ") + textures[i].name).c_str(), i == s_tex ? true : false)) {
-                    if (i != s_tex)
-                        s_tex = i;
-                    else
-                        s_tex = -1;
-                    s_shape = -1;
-                    s_vert = -1;
-                    s_del = false;
-                    n_w = false;
-                    s_tool = -1;
-                };
-        }
-        im::End();
-        if (s_shape > -1) {
-            im::Begin(shapes[s_shape].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-            im::SetWindowPos({ camera.viewport.x - ImGui::GetWindowSize().x, 0 });
-            im::SetWindowSize({ camera.viewport.x / 5.f, camera.viewport.y });
-            im::InputText("Name", &shapes[s_shape].name);
-            XsInfo(shapes[s_shape].sh);
-            char** _tsv = &vert_name[0];
-            im::Combo("Vertices", &shapes[s_shape].s_vert, _tsv, vert_name.size());
-            if (shapes[s_shape].s_vert > 1) {
-                im::Combo("Xs Mode", &shapes[s_shape].xs_vert, xs_vert_types, 4);
-                im::Combo("GL Mode", &shapes[s_shape].gl_vert, gl_vert_types, 5);
-            }
-            elif (shapes[s_shape].s_vert == 1) {
-                im::Combo("Solid Type", &shapes[s_shape].s_solid, solid_types, 10);
-                im::Combo("Xs Mode", &shapes[s_shape].xs_vert, xs_vert_types, 4);
-            };
-            _tsv = &tex_name[0];
-            im::Combo("Texture", &shapes[s_shape].s_texture, _tsv, tex_name.size());
-            if (shapes[s_shape].s_texture > 0)
-                XsInfo(textures[shapes[s_shape].s_texture - 1].tx);
-            auto t_nthm = &im::GetStyle();
-            auto _thm = im::GetStyle();
-            t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
-            t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
-            t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
-            if (im::Button("Delete")) {
-                if (XsIsKeyPressed(XS_KEY_SHIFT)) {
-                    shapes.erase(shapes.begin() + s_shape);
-                    shape_name.erase(shape_name.begin() + s_shape);
-                    s_shape = -1;
-                    s_tex = -1;
-                    n_w = false;
-                    s_tool = -1;
-                }
-                else
-                    s_del = true;
-            }
-            *t_nthm = _thm;
-            im::End();
-            
-            if (s_del) {
-                s_vert = -1;
-                nw_t = -1;
-                n_w = false;
-                im::Begin(WindowName, (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-                im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
-                im::SetWindowSize({ 350, 105 });
-                im::Text("A shape will be deleted, do you confirm?");
-                im::Text(" ");
-                im::Text(" ");
-                auto t_nthm = &im::GetStyle();
-                auto _thm = im::GetStyle();
-                t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.726);
-                t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.886);
-                t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.986);
-                if (im::Button("Nop   "))
-                    s_del = false;
-
-                t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
-                t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
-                t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
-                im::SameLine(ImGui::GetWindowSize().x - 50, -100);
-                if (im::Button("Yep    ")) {
-                    shape_name.erase(shape_name.begin() + s_shape + 1);
-                    shapes.erase(shapes.begin() + s_shape);
-                    s_del = false;
-                    s_shape = -1;
-                };
-                *t_nthm = _thm;
-                im::End();
-            };
-        }
-        elif(s_vert > -1) {
-            im::Begin(vertices[s_vert].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-            im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2)});
-            im::SetWindowSize({ 250, 100 });
-            im::InputText("Filename", &input_text);
-            im::Combo("Xs Mode", &c_file_format, xs_vert_types, 4);
-            if (im::Button("Load!")) {
-                if (string(input_text.end() - 3, input_text.end()) == "obj" or string(input_text.end() - 3, input_text.end()) == "OBJ" or string(input_text.end() - 3, input_text.end()) == "Obj")
-                    vertices[s_vert].vr = XsOBJLoader(input_text.c_str(), f_XsEnum(c_file_format));
-                elif (string(input_text.end() - 8, input_text.end()) == "xs.model")
-                    vertices[s_vert].vr = XsModelLoader(input_text.c_str());
-            };
-            //auto t_nthm = &im::GetStyle();
-            //auto _thm = im::GetStyle();
-            //t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
-            //t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
-            //t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
-            //if (im::Button("Delete")) {
-            //    for (auto& i : shapes)
-            //        if (i.s_vert - 1 == s_vert) {
-            //            i.s_vert = -1;
-            //            break;
-            //        };
-            //    vertices.erase(vertices.begin() + s_vert);
-            //    s_vert = -1;
-            //};
-            //*t_nthm = _thm;
-            im::End();
-        }
-        elif(s_tex > -1) {
-            im::Begin(textures[s_tex].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-            im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
-            im::SetWindowSize({ 250, 400 });
-            if (textures[s_tex].tx.isLoad())
-                XsInfo(textures[s_tex].tx);
-            im::InputText("Filename", &input_text);
-            im::Combo("Filter", &lt_f, p_filter_types, 2);
-            im::Combo("Wrapping", &lt_w, p_wrap_types, 4);
-            im::Combo("Format", &lt_t, p_format_types, 3);
-            if (im::Button("Load.")) {
-                textures[s_tex].tx = XsTextureSTB(input_text.c_str(), lt_t == 0 ? GL_RGB : lt_t == 1 ? GL_RGBA : GL_SRGB, lt_f == 0 ? GL_NEAREST : GL_LINEAR, lt_w == 0 ? GL_REPEAT : lt_w == 1 ? GL_MIRRORED_REPEAT : lt_w == 2 ? GL_CLAMP_TO_EDGE : GL_CLAMP_TO_BORDER);
-            };
-            //auto t_nthm = &im::GetStyle();
-            //auto _thm = im::GetStyle();
-            //t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
-            //t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
-            //t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
-            //if (im::Button("Delete")) {
-            //    for (auto& i : shapes)
-            //        if (i.s_texture == s_tex) {
-            //            i.s_texture = -1;
-            //            break;
-            //        };
-            //    tex_name.erase(tex_name.begin() + s_tex + 1);
-            //    textures.erase(textures.begin() + s_tex);
-            //    s_tex = -1;
-            //};
-            //*t_nthm = _thm;
-            im::End();
-        }
-
-        im::Begin("Log", (bool*)0, ImGuiWindowFlags_NoMove);
-        im::SetWindowPos({ camera.viewport.x / 10, camera.viewport.y - (ImGui::GetWindowSize().y) + 20 });
-        im::SetWindowSize({ s_shape != -1 ? camera.viewport.x - camera.viewport.x / 10 - camera.viewport.x / 5 : camera.viewport.x - camera.viewport.x / 10, (ImGui::GetWindowSize().y > camera.viewport.y / 1.01) ? float(camera.viewport.y / 1.01) : float(ImGui::GetWindowSize().y) });
-        for (auto& i : Log.data) {
-            im::PushStyleColor(ImGuiCol_Text, ImVec4(i.color.x, i.color.y, i.color.z, 1));
-            im::Text(i.text_cstr());
-            im::PopStyleColor();
-        };
-        im::End();
-
-        if (n_w) {
-            im::Begin("New ", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-            im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
-            im::SetWindowSize({ 250, 140 });
-            if (im::Button("3D Shape  ")) {
-                n_w = false;
-                if (XsIsKeyPressed(XS_KEY_SHIFT)) {
-                    Shape_t _t;
-                    _t.sh = XsShape();
-                    _t.name = string("Shape ") + str(leftshapenum);
-                    shape_name.push_back(_strdup(_t.name.c_str()));
-                    shapes.push_back(_t);
-                    Log << "Create a 3D Shape";
-                    leftshapenum++;
-                    nw_st.name = string("Shape ") + str(leftshapenum);
-                }
-                else
-                    nw_t = 0;
-            }
-            if (im::Button("Vertices  ")) {
-                n_w = false;
-                if (XsIsKeyPressed(XS_KEY_SHIFT)) {
-                    Vertices_t _t;
-                    _t.name = string("Vertices ") + str(leftvertnum);
-                    vert_name.push_back(_strdup(_t.name.c_str()));
-                    vertices.push_back(_t);
-                    leftvertnum++;
-                    nw_st.name = string("Vertices ") + str(leftvertnum);
-                    Log << "Create a Vertices";
-                }
-                else
-                    nw_t = 1;
-            }
-            if (im::Button("Texture  ")) {
-                n_w = false;
-                nw_t = 2;
-            }
-            auto t_nthm = &im::GetStyle();
-            auto _thm = im::GetStyle();
-            t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
-            t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
-            t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
-            if (im::Button("Cancel"))
-                n_w = false;
-            *t_nthm = _thm;
-            im::End();
-        };
-        if (nw_t >= 0) {
-            if (nw_t == 0) {
-                im::Begin("New 3D Shape", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-                im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
-                im::SetWindowSize({ 250, 130 });
-                im::InputText("Name", &nw_st.name);
-                char** _tsv = &shape_name[0];
-                im::Combo("Copy From", &s_ns, _tsv, shape_name.size());
-                if (im::Button("Create")) {
-                    nw_st.sh = s_ns == 0 ? XsShape() : shapes[s_ns - 1].sh;
-                    shape_name.push_back(_strdup(nw_st.name.c_str()));
-                    shapes.push_back(nw_st);
-                    Log << "Create a 3D Shape";
-                    nw_t = -1;
-                };
-                auto t_nthm = &im::GetStyle();
-                auto _thm = im::GetStyle();
-                t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
-                t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
-                t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
-                if (im::Button("Cancel"))
-                    nw_t = -1;
-                *t_nthm = _thm;
-                im::End();
-            }
-            elif (nw_t == 1) {
-                im::Begin("New Vertices", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-                im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
-                im::SetWindowSize({ 250, 130 });
-                im::InputText("Name", &nw_vt.name);
-                char** _tsv = new char*[vert_name.size() - 1];
-                _tsv[0] = _strdup("none");
-                for (size_t i = 2; i < vert_name.size(); i++)
-                    _tsv[i - 1] = vert_name[i];
-                im::Combo("Copy From", &s_nv, _tsv, vert_name.size() - 1);
-                if (im::Button("Create")) {
-                    Vertices_t _t;
-                    _t.name = nw_vt.name;
-                    _t.vr = s_nv == 0 ? XsVertices() : vertices[s_nv - 1].vr;
-                    vert_name.push_back(_strdup(_t.name.c_str()));
-                    vertices.push_back(_t);
-                    Log << "Create a Vertices";
-                    nw_t = -1;
-                }
-                auto t_nthm = &im::GetStyle();
-                auto _thm = im::GetStyle();
-                t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
-                t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
-                t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
-                if (im::Button("Cancel"))
-                    nw_t = -1;
-                *t_nthm = _thm;
-                im::End();
-            }
-            elif(nw_t == 2) {
-                im::Begin("New Texture", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-                im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
-                im::SetWindowSize({ 250, 130 });
-                im::InputText("Name", &nw_tt.name);
-                char** _tsv = &tex_name[0];
-                im::Combo("Copy From", &s_nt, _tsv, tex_name.size());
-                if (im::Button("Create")) {
-                    Texture_t _t;
-                    _t.name = nw_tt.name;
-                    _t.tx = s_nt == 0 ? XsTextureSTB() : textures[s_nt - 1].tx;
-                    tex_name.push_back(_strdup(_t.name.c_str()));
-                    textures.push_back(_t);
-                    Log << "Create a Texture";
-                    nw_t = -1;
-                }
-                auto t_nthm = &im::GetStyle();
-                auto _thm = im::GetStyle();
-                t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
-                t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
-                t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
-                if (im::Button("Cancel"))
-                    nw_t = -1;
-                *t_nthm = _thm;
-                im::End();
-            };
-        };
-    }
+    void ui();
 
     bool _tool = false;
     int s_tool = -1;
     string _notepad;
-    void otherui() {
-        im::Begin("dsafbdjagvfa", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
-        im::SetWindowPos({ camera.viewport.x - ((s_shape != -1) ? (camera.viewport.x / 5.f) : 0.f) - 55, -5 });
-        im::SetWindowSize({ 100, 100 });
-        if (im::Button("Tools")) {
-            s_tex = -1;
-            s_vert = -1;
-            s_tool = -1;
-            n_w = false;
-            _tool = !_tool;
-        };
-        im::End();
-
-        if (_tool) {
-            im::Begin("Tools ", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-            im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
-            im::SetWindowSize({ 250, 300 });
-            if (im::Button("Calculator", { 230, 0 })) {
-                s_tool = 0;
-                _tool = false;
-            };
-            if (im::Button("Notepad", { 230, 0 })) {
-                s_tool = 1;
-                _tool = false;
-            };
-            auto t_nthm = &im::GetStyle();
-            auto _thm = im::GetStyle();
-            t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
-            t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
-            t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
-            if (im::Button("Cancel", { 230, 0 })) {
-                _tool = false;
-                s_tool = -1;
-            };
-            *t_nthm = _thm;
-            im::End();
-        };
-        if (s_tool > -1) {
-            if (s_tool == 1) {
-                im::Begin("Notepad  ", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-                im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
-                im::SetWindowSize({ 300, 150 });
-                im::InputTextMultiline("Notepad  ", &_notepad);
-                im::End();
-            };
-        };
-    };
+    void otherui();
 
     float d_yaw = 0, d_pitch = 0;
     void xsui() {
@@ -715,6 +329,11 @@ private:
 
     ImVec4 ximColor(v3f v) { return ImVec4(v.x, v.y, v.z, 1.f); };
     ImVec4 ximColor(v3f v, float va) { return ImVec4(v.x, v.y, v.z, va); };
+
+    XsChrono tex_preview_timer;
+    sf::Texture preview_tex;
+    bool preview_loaded = false;
+    string first_preview_file = "", last_preview_file = "";
 public:
     XsCamera camera;
     sf::RenderWindow window;
@@ -754,9 +373,10 @@ public:
         camera.pos = vex3f(-20, 20, 0);
 
         floor_shader = XsShader(floor_shader_vs, floor_shader_fs);
-    
+
         nw_st.name = "Shape 0";
         nw_vt.name = "Vertices 0";
+        ImGuiFileDialog::Instance()->SetExtentionInfos(".xs.model", ImVec4(XsRed.x,XsRed.y,XsRed.z,0.9), "XS");
 
         ImVec4 im_pink =    ximColor(XsHexToRGB(0xd94e6a));
         ImVec4 im_pink2 =   ximColor(XsHexToRGB(0xc23e64));
@@ -822,6 +442,7 @@ public:
         pushs.push_back(push_t(push_v, code));
         Log << "Push function";
     };
+    float Fps() { return fps; };
 
     void operator<<(XsShape& v) {
         Shape_t _t;
@@ -963,3 +584,5 @@ public:
         };
     };
 };
+
+#include "XsEngineUI.hpp"
