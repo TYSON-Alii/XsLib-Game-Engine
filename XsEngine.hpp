@@ -164,12 +164,12 @@ private:
                     speed_x += (float)event.mouseWheel.delta * 10;
                     if (speed_x < 20)
                         speed_x = 20;
-                    b_c_speed = true;
-                    c_speed.restart();
+                    show_cam_speed = true;
+                    set_cam_speed_tm.restart();
                 }
                 else {
-                    if (c_speed.getMilliSeconds() > 2.f)
-                        b_c_speed = false;
+                    if (set_cam_speed_tm.getMilliSeconds() > 2.f)
+                        show_cam_speed = false;
                 };
                 if (XsIsKeyPressed(XS_KEY_W) && !XsIsKeyPressed(XS_KEY_SPACE))
                     speed += camera.rot * (1.f / speed_x);
@@ -184,12 +184,12 @@ private:
                 cam_vel = (sm_pos - cam_rot) / 17.5;
                 last_mouse_pos += cam_vel;
 
-                b_c_move = true;
-                c_move.restart();
+                show_cam_info = true;
+                show_cam_info_tm.restart();
             }
             else {
-                if (c_move.getMilliSeconds() > 2.f)
-                    b_c_move = false;
+                if (show_cam_info_tm.getMilliSeconds() > 2.f)
+                    show_cam_info = false;
                 mouse_press = false;
             };
             if (!XsIsKeyPressed(XS_KEY_S) && !XsIsKeyPressed(XS_KEY_W))
@@ -204,8 +204,6 @@ private:
     };
 
     XsPopUpSett p_sett;
-    bool b_shape = false;
-    int s_shape = -1;
     sf::Clock imclock;
     int leftshapenum = 1;
     int leftvertnum = 1;
@@ -220,55 +218,67 @@ private:
         string name;
     };
     struct Shape_t {
-        XsShape sh;
-        Vertices_t vert;
-        int s_vert = 0;
-        int xs_vert = 0;
-        int gl_vert = 0;
-        int s_texture = 0;
+        XsShape* sh = nullptr;
+        int s_vert = (0);
+        int xs_vert = (0);
+        int gl_vert = (0);
+        int s_texture = (0);
         int s_solid = 0;
-        float s_point = 1;
-        float w_line = 1;
+        int s_coll = 0;
+        int* t_colls;
+        bool show_coll = false;
+        int s_effect = 0;
+        float* s_point = nullptr;
+        float* w_line = nullptr;
+        bool advanced = false;
+        string name;
+    };
+    struct Coll_t {
+        XsColl cl;
+        bool view = true;
+        string name;
+    };
+    struct Effect_t {
+        XsEffect ef;
+        int s_effect = 0;
+        bool use = false;
         string name;
     };
     struct Shape2d_t {
         XsShape2d sh;
         string name;
     };
+    vector<Coll_t> colls;
+    vector<Effect_t> effects;
     vector<Shape_t> shapes;
-    bool b_vert = false;
-    int s_vert = -1;
     vector<Vertices_t> vertices;
+    vector<Texture_t> textures;
+    vector<char*> coll_name = { _strdup("none") };
+    vector<char*> effect_name = { _strdup("none") };
     vector<char*> vert_name = {_strdup("none"), _strdup("solid")};
     vector<char*> shape_name = { _strdup("none") };
-
-    int s_tex = -1;
-    vector<Texture_t> textures;
     vector<char*> tex_name = { _strdup("none") };
     const const char* p_format_types[3]{ "RGB", "RGBA", "SRGB" };
     const const char* p_filter_types[2]{ "Nearest", "Linear" };
     const const char* p_wrap_types[4]{ "Repeat", "Mirrored Repeat", "Clamp to Edge", "Clamp to Border" };
-
     const const char* xs_vert_types[4]{ "vertex", "vertex and texture", "vertex and normal", "all" };
     const const char* gl_vert_types[5]{ "points", "lines", "triangles", "quads", "polygon" };
     const const char* solid_types[10]{ "cube", "prism", "sphere", "cylinder", "cone", "ico sphere", "torus", "teapot", "star", "monke", };
     
     string input_text;
     const const char* file_format[3]{ "default", "obj", "xs.model" };
-    int c_file_format = 0;
+    int vert_load_format = 0;
 
     float fps = 1.f;
+    XsChrono fps_tm;
     std::chrono::high_resolution_clock::time_point s_fps;
 
-    XsChrono c_speed;
-    bool b_c_speed = false;
+    XsChrono set_cam_speed_tm;
+    bool show_cam_speed = false;
 
-    XsChrono c_move;
-    bool b_c_move = false;
+    XsChrono show_cam_info_tm;
+    bool show_cam_info = false;
     
-    bool s_del = false;
-    bool n_w = false;
-    int nw_t = -1;
     Shape_t nw_st;
     Vertices_t nw_vt;
     Texture_t nw_tt;
@@ -281,16 +291,14 @@ private:
         int num = -1;
     };
     Select_t selected;
+    Select_t selected_r;
 
     int lt_f = 0, lt_w = 0, lt_t = 0;
     void ui();
 
-    bool _tool = false;
-    int s_tool = -1;
     string _notepad;
     void otherui();
 
-    float d_yaw = 0, d_pitch = 0;
     void xsui() {
     //    p_sett.screenSize = camera.viewport;
     //    p_sett.begin();
@@ -334,7 +342,146 @@ private:
     sf::Texture preview_tex;
     bool preview_loaded = false;
     string first_preview_file = "", last_preview_file = "";
+
+    short int them = -1; // 0 = dark, 1 = light
+    void setThem(int v) {
+        if (v == 0 and them != v) {
+            ImVec4* colors = ImGui::GetStyle().Colors;
+            colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 0.98f);
+            colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 0.91f);
+            colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.56f);
+            colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+            colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
+            colors[ImGuiCol_Border] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+            colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+            colors[ImGuiCol_FrameBg] = ImVec4(0.12f, 0.10f, 0.21f, 1.00f);
+            colors[ImGuiCol_FrameBgHovered] = ImVec4(0.37f, 0.17f, 0.69f, 1.00f);
+            colors[ImGuiCol_FrameBgActive] = ImVec4(0.45f, 0.31f, 0.85f, 1.00f);
+            colors[ImGuiCol_TitleBg] = ImVec4(0.16f, 0.16f, 0.19f, 0.94f);
+            colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.16f, 0.19f, 0.96f);
+            colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.16f, 0.16f, 0.19f, 0.98f);
+            colors[ImGuiCol_MenuBarBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+            colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
+            colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
+            colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
+            colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+            colors[ImGuiCol_CheckMark] = ImVec4(0.82f, 0.42f, 0.48f, 1.00f);
+            colors[ImGuiCol_SliderGrab] = ImVec4(0.45f, 0.31f, 0.85f, 1.00f);
+            colors[ImGuiCol_SliderGrabActive] = ImVec4(0.37f, 0.17f, 0.69f, 1.00f);
+            colors[ImGuiCol_Button] = ImVec4(0.29f, 0.07f, 0.11f, 1.00f);
+            colors[ImGuiCol_ButtonHovered] = ImVec4(0.42f, 0.11f, 0.18f, 1.00f);
+            colors[ImGuiCol_ButtonActive] = ImVec4(0.42f, 0.11f, 0.18f, 1.00f);
+            colors[ImGuiCol_Header] = ImVec4(0.12f, 0.10f, 0.21f, 1.00f);
+            colors[ImGuiCol_HeaderHovered] = ImVec4(0.37f, 0.17f, 0.69f, 1.00f);
+            colors[ImGuiCol_HeaderActive] = ImVec4(0.45f, 0.31f, 0.85f, 1.00f);
+            colors[ImGuiCol_Separator] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+            colors[ImGuiCol_SeparatorHovered] = ImVec4(0.91f, 0.52f, 0.64f, 0.78f);
+            colors[ImGuiCol_SeparatorActive] = ImVec4(0.67f, 0.64f, 0.81f, 1.00f);
+            colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.02f, 0.04f, 0.20f);
+            colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.41f, 0.41f, 0.41f, 0.67f);
+            colors[ImGuiCol_ResizeGripActive] = ImVec4(0.35f, 0.35f, 0.35f, 0.95f);
+            colors[ImGuiCol_Tab] = ImVec4(0.28f, 0.17f, 0.44f, 0.86f);
+            colors[ImGuiCol_TabHovered] = ImVec4(0.28f, 0.16f, 0.71f, 0.80f);
+            colors[ImGuiCol_TabActive] = ImVec4(0.10f, 0.06f, 0.24f, 1.00f);
+            colors[ImGuiCol_TabUnfocused] = ImVec4(0.07f, 0.10f, 0.15f, 0.97f);
+            colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.30f, 0.26f, 0.39f, 1.00f);
+            colors[ImGuiCol_PlotLines] = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+            colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+            colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+            colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+            colors[ImGuiCol_TableHeaderBg] = ImVec4(0.19f, 0.19f, 0.20f, 1.00f);
+            colors[ImGuiCol_TableBorderStrong] = ImVec4(0.31f, 0.31f, 0.35f, 1.00f);
+            colors[ImGuiCol_TableBorderLight] = ImVec4(0.23f, 0.23f, 0.25f, 1.00f);
+            colors[ImGuiCol_TableRowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+            colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
+            colors[ImGuiCol_TextSelectedBg] = ImVec4(0.64f, 0.78f, 0.94f, 0.35f);
+            colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
+            colors[ImGuiCol_NavHighlight] = ImVec4(0.69f, 0.79f, 0.90f, 1.00f);
+            colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+            colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+            colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+            them = 0;
+        }
+        else if (v == 1 and them != v) {
+            ImVec4* colors = ImGui::GetStyle().Colors;
+            colors[ImGuiCol_Text] = ImVec4(0.03f, 0.03f, 0.03f, 0.98f);
+            colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 0.91f);
+            colors[ImGuiCol_WindowBg] = ImVec4(0.95f, 0.95f, 0.95f, 0.56f);
+            colors[ImGuiCol_ChildBg] = ImVec4(0.93f, 0.93f, 0.93f, 0.00f);
+            colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
+            colors[ImGuiCol_Border] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+            colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+            colors[ImGuiCol_FrameBg] = ImVec4(0.41f, 0.42f, 0.48f, 1.00f);
+            colors[ImGuiCol_FrameBgHovered] = ImVec4(0.33f, 0.34f, 0.43f, 1.00f);
+            colors[ImGuiCol_FrameBgActive] = ImVec4(0.33f, 0.32f, 0.40f, 1.00f);
+            colors[ImGuiCol_TitleBg] = ImVec4(0.16f, 0.16f, 0.19f, 0.94f);
+            colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.16f, 0.19f, 0.96f);
+            colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.16f, 0.16f, 0.19f, 0.98f);
+            colors[ImGuiCol_MenuBarBg] = ImVec4(0.73f, 0.73f, 0.73f, 1.00f);
+            colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
+            colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
+            colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
+            colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+            colors[ImGuiCol_CheckMark] = ImVec4(0.42f, 0.48f, 0.82f, 1.00f);
+            colors[ImGuiCol_SliderGrab] = ImVec4(0.31f, 0.36f, 0.85f, 1.00f);
+            colors[ImGuiCol_SliderGrabActive] = ImVec4(0.17f, 0.21f, 0.69f, 1.00f);
+            colors[ImGuiCol_Button] = ImVec4(0.17f, 0.18f, 0.26f, 1.00f);
+            colors[ImGuiCol_ButtonHovered] = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+            colors[ImGuiCol_ButtonActive] = ImVec4(0.10f, 0.10f, 0.12f, 1.00f);
+            colors[ImGuiCol_Header] = ImVec4(0.21f, 0.21f, 0.25f, 1.00f);
+            colors[ImGuiCol_HeaderHovered] = ImVec4(0.22f, 0.23f, 0.29f, 1.00f);
+            colors[ImGuiCol_HeaderActive] = ImVec4(0.45f, 0.31f, 0.85f, 1.00f);
+            colors[ImGuiCol_Separator] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+            colors[ImGuiCol_SeparatorHovered] = ImVec4(0.52f, 0.59f, 0.91f, 0.78f);
+            colors[ImGuiCol_SeparatorActive] = ImVec4(0.67f, 0.64f, 0.81f, 1.00f);
+            colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.02f, 0.04f, 0.20f);
+            colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.41f, 0.41f, 0.41f, 0.67f);
+            colors[ImGuiCol_ResizeGripActive] = ImVec4(0.35f, 0.35f, 0.35f, 0.95f);
+            colors[ImGuiCol_Tab] = ImVec4(0.20f, 0.21f, 0.25f, 0.86f);
+            colors[ImGuiCol_TabHovered] = ImVec4(0.21f, 0.20f, 0.24f, 0.80f);
+            colors[ImGuiCol_TabActive] = ImVec4(0.20f, 0.20f, 0.26f, 1.00f);
+            colors[ImGuiCol_TabUnfocused] = ImVec4(0.09f, 0.07f, 0.15f, 0.97f);
+            colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.18f, 0.18f, 0.25f, 1.00f);
+            colors[ImGuiCol_PlotLines] = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+            colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+            colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+            colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+            colors[ImGuiCol_TableHeaderBg] = ImVec4(0.13f, 0.13f, 0.15f, 1.00f);
+            colors[ImGuiCol_TableBorderStrong] = ImVec4(0.31f, 0.31f, 0.35f, 1.00f);
+            colors[ImGuiCol_TableBorderLight] = ImVec4(0.23f, 0.23f, 0.25f, 1.00f);
+            colors[ImGuiCol_TableRowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+            colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
+            colors[ImGuiCol_TextSelectedBg] = ImVec4(0.64f, 0.78f, 0.94f, 0.35f);
+            colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
+            colors[ImGuiCol_NavHighlight] = ImVec4(0.69f, 0.79f, 0.90f, 1.00f);
+            colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+            colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+            colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+            them = 1;
+        };
+    };
+
+    XsSaver* file;
 public:
+    void save(const char* file_name) {
+        file = new XsSaver(file_name);
+        file->add(WindowName, "window_name");
+        file->add(cam_rot, "cam_rot");
+        file->add(speed_x, "speed_x");
+        file->add(them, "them");
+        file->add(input_text, "input_text");
+        file->add(vert_load_format, "vert_load_format");
+        file->add(selected_r.type, "selected_r_type");
+        file->add(selected_r.num, "selected_r_num");
+        file->add(selected.type, "selected_type");
+        file->add(selected.num, "selected_num");
+        file->add(camera.pos, "cam_pos");
+        file->add(camera.rot, "cam_rot");
+        file->add(camera.viewport, "cam_viewp");
+        file->add(camera.near_, "cam_near");
+        file->add(camera.far_, "cam_far");
+        file->add(camera.fov, "cam_fov");
+    };
     XsCamera camera;
     sf::RenderWindow window;
     sf::Event event;
@@ -378,53 +525,7 @@ public:
         nw_vt.name = "Vertices 0";
         ImGuiFileDialog::Instance()->SetExtentionInfos(".xs.model", ImVec4(XsRed.x,XsRed.y,XsRed.z,0.9), "XS");
 
-        ImVec4 im_pink =    ximColor(XsHexToRGB(0xd94e6a));
-        ImVec4 im_pink2 =   ximColor(XsHexToRGB(0xc23e64));
-        ImVec4 im_blue =    ximColor(XsHexToRGB(0x4a7a96));
-        ImVec4 im_blue2 =   ximColor(XsHexToRGB(0x333f58));
-        ImVec4 im_black =   ximColor(XsHexToRGB(0x292831));
-        ImVec4 im_purple =  ximColor(XsHexToRGB(0x1f1935));
-        ImVec4 im_dred =    ximColor(XsHexToRGB(0x49111c));
-        ImVec4 im_dred2 =   ximColor(XsHexToRGB(0x6c1d2d));
-        ImVec4 im_purple2 = ximColor(XsHexToRGB(0x5e2baf));
-        ImVec4 im_purple3 = ximColor(XsHexToRGB(0x734ed9));
-        {
-            ImGuiStyle* style = &im::GetStyle();
-            style->Colors[ImGuiCol_TitleBg] = im_black;
-            style->Colors[ImGuiCol_TitleBgActive] = im_black;
-            style->Colors[ImGuiCol_TitleBgCollapsed] = im_black;
-            style->Colors[ImGuiCol_Button] = im_dred;
-            style->Colors[ImGuiCol_ButtonActive] = im_dred2;
-            style->Colors[ImGuiCol_ButtonHovered] = im_dred2;
-            style->Colors[ImGuiCol_FrameBg] = im_purple;
-            style->Colors[ImGuiCol_FrameBgActive] = im_purple3;
-            style->Colors[ImGuiCol_FrameBgHovered] = im_purple2;
-            style->Colors[ImGuiCol_SliderGrab] = im_purple3;
-            style->Colors[ImGuiCol_SliderGrabActive] = im_purple2;
-            style->Colors[ImGuiCol_Header] = im_purple;
-            style->Colors[ImGuiCol_HeaderActive] = im_purple3;
-            style->Colors[ImGuiCol_HeaderHovered] = im_purple2;
-            style->Colors[ImGuiCol_CheckMark] = ImVec4(0.82f, 0.42f, 0.48f, 1.00f);
-            style->Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.91f, 0.52f, 0.64f, 0.78f);
-            style->Colors[ImGuiCol_SeparatorActive] = ImVec4(0.67f, 0.64f, 0.81f, 1.00f);
-            style->Colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.02f, 0.04f, 0.20f);
-            style->Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.41f, 0.41f, 0.41f, 0.67f);
-            style->Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.35f, 0.35f, 0.35f, 0.95f);
-            style->Colors[ImGuiCol_Tab] = ImVec4(0.28f, 0.17f, 0.44f, 0.86f);
-            style->Colors[ImGuiCol_TabHovered] = ImVec4(0.28f, 0.16f, 0.71f, 0.80f);
-            style->Colors[ImGuiCol_TabActive] = ImVec4(0.10f, 0.06f, 0.24f, 1.00f);
-            style->Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.30f, 0.26f, 0.39f, 1.00f);
-            style->Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.64f, 0.78f, 0.94f, 0.35f);
-            style->Colors[ImGuiCol_NavHighlight] = ImVec4(0.69f, 0.79f, 0.90f, 1.00f);
-            style->Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 0.98f);
-            style->Colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 0.91f);
-            style->Colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.56f);
-            style->Colors[ImGuiCol_TitleBg] = ImVec4(0.16f, 0.16f, 0.19f, 0.94f);
-            style->Colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.16f, 0.19f, 0.96f);
-            style->Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.16f, 0.16f, 0.19f, 0.98f);
-            style->Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.64f, 0.78f, 0.94f, 0.35f);
-            style->Colors[ImGuiCol_NavHighlight] = ImVec4(0.69f, 0.79f, 0.90f, 1.00f);
-        }
+        setThem(0);
     };
     vector<push_t> Pushs() { return pushs; };
     /*
@@ -447,7 +548,7 @@ public:
     void operator<<(XsShape& v) {
         Shape_t _t;
         _t.name = string("Shape ") + str(leftshapenum);
-        _t.sh = v;
+        _t.sh = new XsShape(v);
         shapes.push_back(_t);
         shape_name.push_back(_strdup(_t.name.c_str()));
         leftshapenum++;
@@ -530,26 +631,27 @@ public:
                     break;
                 };
 
-
             for (auto& i : shapes) {
+                if (i.show_coll and i.s_coll > 0)
+                    XsDrawColl(colls[i.s_coll - 1].cl, 1);
                 if (i.s_vert > 1) {
                     glL();
                     if (i.s_texture > 0) {
-                        i.sh.draw(vertices[i.s_vert - 2].vr, textures[i.s_texture - 1].tx, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
+                        i.sh->draw(vertices[i.s_vert - 2].vr, textures[i.s_texture - 1].tx, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
                         glBindTexture(GL_TEXTURE_2D, 0);
                     }
                     else
-                        i.sh.draw(vertices[i.s_vert - 2].vr, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
+                        i.sh->draw(vertices[i.s_vert - 2].vr, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
                 }
                 elif(i.s_vert == 1) {
                     glL();
                     if (i.s_texture > 0) {
                         textures[i.s_texture - 1].tx.bind();
-                        i.sh.draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                        i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
                         glBindTexture(GL_TEXTURE_2D, 0);
                     }
                     else
-                        i.sh.draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                        i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
                 }
             };
 
@@ -570,6 +672,8 @@ public:
                 otherui();
             };
 
+            im::ShowDemoWindow();
+
             for (auto& i : pushs)
                 if (i.code == "in imgui") {
                     i.push_data();
@@ -580,7 +684,10 @@ public:
             ImGui::SFML::Render(window);
             window.popGLStates();
             window.display();
-            fps = (float)1e9 / (float)std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - s_fps).count();
+            if (fps_tm.getMilliSeconds() > 0.1) {
+                fps_tm.restart();
+                fps = (float)1e9 / (float)std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - s_fps).count();
+            };
         };
     };
 };
