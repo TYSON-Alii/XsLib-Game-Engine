@@ -18,83 +18,99 @@ void XsLib::ui() {
     im::SetWindowPos({ 0, 0 });
     im::SetWindowSize({ camera.viewport.x / 10, camera.viewport.y });
 
-    if (im::Selectable("New")) {
+    if (im::Button("New", { camera.viewport.x / 10 - 20, 0 })) {
         selected.type = "new";
         ImGuiFileDialog::Instance()->Close();
         selected.num = -1;
     };
-    if (im::CollapsingHeader("Shapes")) {
-        for (size_t i = 0; i < shapes.size(); i++)
-            if (im::Selectable(string(str((i == selected_r.num and selected_r.type == "shape") ? "+ " : "- ") + shapes[i].name).c_str(), (i == selected_r.num and selected_r.type == "shape") ? true : false)) {
+    if (im::TreeNode("Shapes")) {
+        for (size_t i = 0; i < shapes.size(); i++) {
+            i != selected_r.num ? im::SetNextTreeNodeOpen(i == selected_r.num) : void();
+            if (im::TreeNode(shapes[i].name.c_str()/*, (i == selected_r.num and selected_r.type == "shape") ? true : false)*/)) {
                 if (i != selected_r.num) {
                     selected_r.type = "shape";
                     selected_r.num = i;
                     ImGuiFileDialog::Instance()->Close();
                     Log << "Select a 3D Shape";
                 }
-                else {
-                    selected_r.type = "none";
-                    selected_r.num = -1;
-                    Log << "Un-Select 3D Shape";
+                if (shapes[i].s_vert > 1)
+                    if (im::Selectable(vertices[shapes[i].s_vert - 2].name.c_str())) {
+                        selected.type = "vert";
+                        selected.num = shapes[i].s_vert - 2;
+                    };
+                if (shapes[i].s_texture > 0)
+                    if (im::Selectable(textures[shapes[i].s_texture - 1].name.c_str())) {
+                        selected.type = "tex";
+                        selected.num = shapes[i].s_texture - 1;
+                    };
+                im::TreePop();
+            }
+        }
+        im::TreePop();
+    }
+    if (im::TreeNode("Environments")) {
+        if (im::TreeNode("Vertices")) {
+            for (size_t i = 0; i < vertices.size(); i++)
+                if (im::Selectable(string(str((i == selected.num and selected.type == "vert") ? "+ " : "- ") + vertices[i].name).c_str(), (i == selected.num and selected.type == "vert") ? true : false)) {
+                    if (i != selected.num) {
+                        selected.type = "vert";
+                        ImGuiFileDialog::Instance()->Close();
+                        selected.num = i;
+                    }
+                    else {
+                        selected.type = "none";
+                        selected.num = -1;
+                    }
                 };
-            };
-    }
-    if (im::CollapsingHeader("Vertices")) {
-        for (size_t i = 0; i < vertices.size(); i++)
-            if (im::Selectable(string(str((i == selected.num and selected.type == "vert") ? "+ " : "- ") + vertices[i].name).c_str(), (i == selected.num and selected.type == "vert") ? true : false)) {
-                if (i != selected.num) {
-                    selected.type = "vert";
-                    ImGuiFileDialog::Instance()->Close();
-                    selected.num = i;
-                }
-                else {
-                    selected.type = "none";
-                    selected.num = -1;
-                }
-            };
-    }
-    if (im::CollapsingHeader("Textures")) {
-        for (size_t i = 0; i < textures.size(); i++)
-            if (im::Selectable(string(str((i == selected.num and selected.type == "tex") ? "+ " : "- ") + textures[i].name).c_str(), (i == selected.num and selected.type == "tex") ? true : false)) {
-                if (i != selected.num) {
-                    selected.type = "tex";
-                    ImGuiFileDialog::Instance()->Close();
-                    selected.num = i;
-                }
-                else {
-                    selected.type = "none";
-                    selected.num = -1;
-                }
-            };
-    }
-    if (im::CollapsingHeader("Colls")) {
-        for (size_t i = 0; i < colls.size(); i++)
-            if (im::Selectable(string(str((i == selected.num and selected.type == "coll") ? "+ " : "- ") + textures[i].name).c_str(), (i == selected.num and selected.type == "coll") ? true : false)) {
-                if (i != selected.num) {
-                    selected.type = "coll";
-                    ImGuiFileDialog::Instance()->Close();
-                    selected.num = i;
-                }
-                else {
-                    selected.type = "none";
-                    selected.num = -1;
-                }
-            };
-    }
-    if (im::CollapsingHeader("Effects")) {
-        for (size_t i = 0; i < effects.size(); i++)
-            if (im::Selectable(string(str((i == selected.num and selected.type == "eff") ? "+ " : "- ") + textures[i].name).c_str(), (i == selected.num and selected.type == "eff") ? true : false)) {
-                if (i != selected.num) {
-                    selected.type = "eff";
-                    ImGuiFileDialog::Instance()->Close();
-                    selected.num = i;
-                }
-                else {
-                    selected.type = "none";
-                    selected.num = -1;
-                }
-            };
-    }
+            im::TreePop();
+        }
+        if (im::TreeNode("Textures")) {
+            for (size_t i = 0; i < textures.size(); i++)
+                if (im::Selectable(string(str((i == selected.num and selected.type == "tex") ? "+ " : "- ") + textures[i].name).c_str(), (i == selected.num and selected.type == "tex") ? true : false)) {
+                    if (i != selected.num) {
+                        selected.type = "tex";
+                        ImGuiFileDialog::Instance()->Close();
+                        selected.num = i;
+                    }
+                    else {
+                        selected.type = "none";
+                        selected.num = -1;
+                    }
+                };
+            im::TreePop();
+        }
+        if (im::TreeNode("Colls")) {
+            for (size_t i = 0; i < colls.size(); i++)
+                if (im::Selectable(string(str((i == selected.num and selected.type == "coll") ? "+ " : "- ") + textures[i].name).c_str(), (i == selected.num and selected.type == "coll") ? true : false)) {
+                    if (i != selected.num) {
+                        selected.type = "coll";
+                        ImGuiFileDialog::Instance()->Close();
+                        selected.num = i;
+                    }
+                    else {
+                        selected.type = "none";
+                        selected.num = -1;
+                    }
+                };
+            im::TreePop();
+        }
+        if (im::TreeNode("Effects")) {
+            for (size_t i = 0; i < effects.size(); i++)
+                if (im::Selectable(string(str((i == selected.num and selected.type == "eff") ? "+ " : "- ") + textures[i].name).c_str(), (i == selected.num and selected.type == "eff") ? true : false)) {
+                    if (i != selected.num) {
+                        selected.type = "eff";
+                        ImGuiFileDialog::Instance()->Close();
+                        selected.num = i;
+                    }
+                    else {
+                        selected.type = "none";
+                        selected.num = -1;
+                    }
+                };
+            im::TreePop();
+        }
+        im::TreePop();
+    };
     im::End();
     if (selected.type == "delete") {
         im::Begin(WindowName, (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
@@ -139,6 +155,10 @@ void XsLib::ui() {
             im::Combo("Solid Type", &shapes[selected_r.num].s_solid, solid_types, 10);
             im::Combo("Xs Mode", &shapes[selected_r.num].xs_vert, xs_vert_types, 4);
         };
+        if (shapes[selected_r.num].gl_vert == 0 and shapes[selected_r.num].s_vert > 1)
+            im::DragFloat("Point Size", &shapes[selected_r.num].s_point, 0.01f, 0.01f, 10);
+        elif (shapes[selected_r.num].gl_vert == 1 and shapes[selected_r.num].s_vert > 1)
+            im::DragFloat("Line Width", &shapes[selected_r.num].w_line, 0.01f, 0.01f, 10);
         _tsv = &tex_name[0];
         im::Combo("Texture", &shapes[selected_r.num].s_texture, _tsv, tex_name.size());
         if (shapes[selected_r.num].s_texture > 0)
@@ -376,6 +396,8 @@ void XsLib::ui() {
                 leftvertnum++;
                 nw_st.name = string("Vertices ") + str(leftvertnum);
                 Log << "Create a Vertices";
+                leftvertnum++;
+                nw_st.name = string("Vertices ") + to_string(leftvertnum);
             }
             else
                 selected.type = "new vert";
@@ -414,6 +436,8 @@ void XsLib::ui() {
             shapes.push_back(nw_st);
             Log << "Create a 3D Shape";
             selected.type = "none";
+            leftshapenum++;
+            nw_st.name = string("Shape ") + to_string(leftshapenum);
         };
         auto t_nthm = &im::GetStyle();
         auto _thm = im::GetStyle();
@@ -443,6 +467,8 @@ void XsLib::ui() {
             vertices.push_back(_t);
             Log << "Create a Vertices";
             selected.type = "none";
+            leftvertnum++;
+            nw_vt.name = string("Vertices ") + to_string(leftvertnum);
         }
         auto t_nthm = &im::GetStyle();
         auto _thm = im::GetStyle();
@@ -469,6 +495,8 @@ void XsLib::ui() {
             textures.push_back(_t);
             Log << "Create a Texture";
             selected.type = "none";
+            lefttexnum++;
+            nw_tt.name = string("Texture ") + to_string(lefttexnum);
         }
         auto t_nthm = &im::GetStyle();
         auto _thm = im::GetStyle();
