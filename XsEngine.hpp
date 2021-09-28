@@ -98,6 +98,7 @@ private:
         glDepthFunc(GL_ALWAYS);
         glDepthMask(GL_FALSE);
         glEnable(GL_LINE_SMOOTH);
+        glEnable(GL_POINT_SMOOTH);
         glL();
         v.use();
         v("projection", camera.projectionMatrix());
@@ -219,18 +220,25 @@ private:
     };
     struct Shape_t {
         XsShape* sh = nullptr;
-        int s_vert = (0);
-        int xs_vert = (0);
-        int gl_vert = (0);
-        int s_texture = (0);
+        int s_vert = 0;
+        int xs_vert = 0;
+        int gl_vert = 0;
+        int s_texture = 0;
         int s_solid = 0;
         int s_coll = 0;
         int* t_colls;
         bool show_coll = false;
         int s_effect = 0;
-        float* s_point = nullptr;
-        float* w_line = nullptr;
+        float s_point = 1;
+        float w_line = 1;
         bool advanced = false;
+        bool use_shader = false;
+        int s_fs_shader = 0;
+        int s_vs_shader = 0;
+        string name;
+    };
+    struct Shader_t {
+        string sd;
         string name;
     };
     struct Coll_t {
@@ -253,11 +261,13 @@ private:
     vector<Shape_t> shapes;
     vector<Vertices_t> vertices;
     vector<Texture_t> textures;
+    vector<Shader_t> shaders;
     vector<char*> coll_name = { _strdup("none") };
     vector<char*> effect_name = { _strdup("none") };
     vector<char*> vert_name = {_strdup("none"), _strdup("solid")};
     vector<char*> shape_name = { _strdup("none") };
     vector<char*> tex_name = { _strdup("none") };
+    vector<char*> shader_name = { _strdup("none") };
     const const char* p_format_types[3]{ "RGB", "RGBA", "SRGB" };
     const const char* p_filter_types[2]{ "Nearest", "Linear" };
     const const char* p_wrap_types[4]{ "Repeat", "Mirrored Repeat", "Clamp to Edge", "Clamp to Border" };
@@ -460,11 +470,11 @@ private:
             them = 1;
         };
     };
-
     XsSaver* file;
 public:
     void save(const char* file_name) {
         file = new XsSaver(file_name);
+        file->clear();
         file->add(WindowName, "window_name");
         file->add(cam_rot, "cam_rot");
         file->add(speed_x, "speed_x");
@@ -482,9 +492,31 @@ public:
         file->add(camera.far_, "cam_far");
         file->add(camera.fov, "cam_fov");
     };
+    void load(const char* file_name) {
+        file = new XsSaver(file_name);
+        WindowName = file->getcstr("window_name");
+        cam_rot = file->getv2f("cam_rot");
+        speed_x = file->getf("speed_x");
+        them = file->geti("them");
+        input_text = file->getstr("input_text");
+        vert_load_format = file->geti("vert_load_format");
+        selected_r.type = file->getstr("selected_r_type");
+        selected_r.num = file->geti("selected_r_num");
+        selected.type = file->getstr("selected_type");
+        selected.num = file->geti("selected_num");
+        camera.pos = file->getv3f("cam_pos");
+        camera.rot = file->getv3f("cam_rot");
+        camera.viewport = file->getv2f("cam_viewp");
+        camera.near_ = file->getf("cam_near");
+        camera.far_ = file->getf("cam_far");
+        camera.fov = file->getf("cam_fov");
+    }
     XsCamera camera;
     sf::RenderWindow window;
     sf::Event event;
+    vector<Shape_t>& Shapes() { return shapes; };
+    vector<Vertices_t>& Vertices() { return vertices; };
+    vector<Texture_t>& Texture() { return textures; };
     Log_t Log;
     XsLib() {};
     XsLib(const char* window_name) {
@@ -593,6 +625,7 @@ public:
             XsLog(XsLogRed, XsLogWhite, "Wrong Shape Type..\n");
     };
     */
+
     void Draw() {
         while (window.isOpen()) {
             s_fps = std::chrono::high_resolution_clock::now();
@@ -611,6 +644,7 @@ public:
             window.pollEvent(event);
             ImGui::SFML::ProcessEvent(event);
             if (event.type == sf::Event::Closed) {
+                save("new_proj.xs.save");
                 Log << "Window closed";
                 window.close();
                 break;
@@ -636,6 +670,10 @@ public:
                     XsDrawColl(colls[i.s_coll - 1].cl, 1);
                 if (i.s_vert > 1) {
                     glL();
+                    if (i.gl_vert == 0 and shapes[selected_r.num].s_vert > 1)
+                        glPointSize(i.s_point);
+                    elif(i.gl_vert == 1 and shapes[selected_r.num].s_vert > 1)
+                        glLineWidth(i.w_line);
                     if (i.s_texture > 0) {
                         i.sh->draw(vertices[i.s_vert - 2].vr, textures[i.s_texture - 1].tx, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
                         glBindTexture(GL_TEXTURE_2D, 0);
@@ -691,5 +729,4 @@ public:
         };
     };
 };
-
 #include "XsEngineUI.hpp"
