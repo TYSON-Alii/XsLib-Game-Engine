@@ -62,7 +62,7 @@ private:
     v3f blue = v3f(34.f, 207.f, 230.f) / 255.f;
     v3f red = v3f(238.f, 23.f, 23.f) / 255.f;
     v3f green = v3f(XsDarkGreen);
-    v3f white = v3f(0.8f, 0.8f, 0.8f);
+    v3f bgColorDark = v3f(0.05f, 0.05f, 0.075f), bgColorLight = v3f(0.85f, 0.85f, 0.875f);
     std::string floor_shader_vs = "                                 \n\
         #version 400                                                \n\
         layout(location = 0) in vec3 aPos;                          \n\
@@ -103,7 +103,10 @@ private:
         v.use();
         v("projection", camera.projectionMatrix());
         v("view", camera.viewMatrix);
-        v("color", white);
+        if (them == 1)
+            v("color", bgColorDark);
+        else if (them == 0)
+            v("color", bgColorLight);
         v("cam_y", camera.pos.y);
         if (3 > fabs(camera.pos.y))
             glLineWidth(4.1 - fabs(camera.pos.y));
@@ -161,7 +164,6 @@ private:
         if (game_mode) {
             if (XsIsKeyPressed(XS_MOUSE_RIGHT)) {
                 if (event.type == sf::Event::MouseWheelMoved) {
-                    cout << speed_x << '\n';
                     speed_x += (float)event.mouseWheel.delta * 10;
                     if (speed_x < 20)
                         speed_x = 20;
@@ -209,6 +211,8 @@ private:
     int leftshapenum = 1;
     int leftvertnum = 1;
     int lefttexnum = 1;
+    int leftcollnum = 1;
+    int lefteffectnum = 1;
 
     struct Vertices_t {
         XsVertices vr;
@@ -220,25 +224,26 @@ private:
     };
     struct Shape_t {
         XsShape* sh = nullptr;
+        v3f origin = 0;
+        //string set_value[5];
         int s_vert = 0;
         int xs_vert = 0;
         int gl_vert = 0;
         int s_texture = 0;
         int s_solid = 0;
         int s_coll = 0;
-        int* t_colls;
+        bool lock_coll_to_shape = false;
         bool show_coll = false;
-        int s_effect = 0;
         float s_point = 1;
         float w_line = 1;
         bool advanced = false;
         bool use_shader = false;
-        int s_fs_shader = 0;
-        int s_vs_shader = 0;
         string name;
     };
     struct Shader_t {
-        string sd;
+        XsShader sd;
+        string file_name_vs;
+        string file_name_fs;
         string name;
     };
     struct Coll_t {
@@ -248,8 +253,7 @@ private:
     };
     struct Effect_t {
         XsEffect ef;
-        int s_effect = 0;
-        bool use = false;
+        int type = 0;
         string name;
     };
     struct Shape2d_t {
@@ -292,9 +296,18 @@ private:
     Shape_t nw_st;
     Vertices_t nw_vt;
     Texture_t nw_tt;
+    Coll_t nw_ct;
+    Effect_t nw_et;
     int s_ns = 0;
     int s_nv = 0;
     int s_nt = 0;
+    int s_nc = 0;
+    int s_ne = 0;
+    char** _tsv;
+    ImGuiStyle* t_nthm;
+    ImGuiStyle _thm;
+    v2f left_panel_size = v2f(7.5, 1);
+    v2f right_panel_size = v2f(5, 1);
 
     struct Select_t {
         string type = "none";
@@ -353,7 +366,7 @@ private:
     bool preview_loaded = false;
     string first_preview_file = "", last_preview_file = "";
 
-    short int them = -1; // 0 = dark, 1 = light
+    short int them = 1; // 0 = dark, 1 = light
     void setThem(int v) {
         if (v == 0 and them != v) {
             ImVec4* colors = ImGui::GetStyle().Colors;
@@ -552,12 +565,17 @@ public:
         camera.pos = vex3f(-20, 20, 0);
 
         floor_shader = XsShader(floor_shader_vs, floor_shader_fs);
+        setThem(0);
+        t_nthm = &im::GetStyle();
+        _thm = im::GetStyle();
 
         nw_st.name = "Shape 0";
         nw_vt.name = "Vertices 0";
+        nw_tt.name = "Texture 0";
+        nw_ct.name = "Coll 1";
+        nw_et.name = "Effect 0";
         ImGuiFileDialog::Instance()->SetExtentionInfos(".xs.model", ImVec4(XsRed.x,XsRed.y,XsRed.z,0.9), "XS");
 
-        setThem(0);
     };
     vector<push_t> Pushs() { return pushs; };
     /*
@@ -584,27 +602,27 @@ public:
         shapes.push_back(_t);
         shape_name.push_back(_strdup(_t.name.c_str()));
         leftshapenum++;
-        nw_st.name = string("Shape ") + str(leftshapenum);
+        nw_st.name = string("Shape ") + to_string(leftshapenum);
         Log << "Add a 3D Shape";
     };
     void operator<<(XsVertices& v) {
         Vertices_t _t;
-        _t.name = string("Vertices ") + str(leftvertnum);
+        _t.name = string("Vertices ") + to_string(leftvertnum);
         _t.vr = v;
         vert_name.push_back(_strdup(_t.name.c_str()));
         vertices.push_back(_t);
         leftvertnum++;
-        nw_st.name = string("Vertices ") + str(leftvertnum);
+        nw_vt.name = string("Vertices ") + to_string(leftvertnum);
         Log << "Add a Vertices";
     };
     void operator<<(XsTextureSTB& v) {
         Texture_t _t;
-        _t.name = string("Texture ") + str(lefttexnum);
+        _t.name = string("Texture ") + to_string(lefttexnum);
         _t.tx = v;
         tex_name.push_back(_strdup(_t.name.c_str()));
         textures.push_back(_t);
         lefttexnum++;
-        nw_tt.name = string("Texture ") + str(lefttexnum);
+        nw_tt.name = string("Texture ") + to_string(lefttexnum);
         Log << "Add a Texture";
     };
     /*void Add(auto& v, const char* name) {
@@ -634,7 +652,10 @@ public:
                     i.push_data();
                     break;
                 };
-            glClearColor(0.05f, 0.05f, 0.075f, 0.f);
+            if (them == 0)
+                glClearColor(bgColorDark.x, bgColorDark.y, bgColorDark.z, 0.f);
+            else if (them == 1)
+                glClearColor(bgColorLight.x, bgColorLight.y, bgColorLight.z, 0.f);
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
             for (auto& i : pushs)
                 if (i.code == "after clear" or i.code == "before process") {
@@ -644,6 +665,10 @@ public:
             window.pollEvent(event);
             ImGui::SFML::ProcessEvent(event);
             if (event.type == sf::Event::Closed) {
+                selected.type = "none";
+                selected.num = 0;
+                selected_r.type = "none";
+                selected_r.num = 0;
                 save("new_proj.xs.save");
                 Log << "Window closed";
                 window.close();
@@ -666,8 +691,17 @@ public:
                 };
 
             for (auto& i : shapes) {
-                if (i.show_coll and i.s_coll > 0)
-                    XsDrawColl(colls[i.s_coll - 1].cl, 1);
+                if (i.s_coll > 0) {
+                    if (i.lock_coll_to_shape) {
+                        XsColl _t = colls[i.s_coll - 1].cl;
+                        _t.pos = i.sh->pos + colls[i.s_coll - 1].cl.pos;
+                        if (i.show_coll)
+                            XsDrawColl(_t, 0.1);
+                    }
+                    else
+                        if (i.show_coll)
+                            XsDrawColl(colls[i.s_coll - 1].cl, 0.1);
+                };
                 if (i.s_vert > 1) {
                     glL();
                     if (i.gl_vert == 0 and shapes[selected_r.num].s_vert > 1)
@@ -710,7 +744,7 @@ public:
                 otherui();
             };
 
-            im::ShowDemoWindow();
+            //im::ShowDemoWindow();
 
             for (auto& i : pushs)
                 if (i.code == "in imgui") {
