@@ -273,53 +273,38 @@ void XsLib::ui() {
                 im::SameLine(100, -100);
                 im::Checkbox("Z", &shapes[selected_r.num].arr.axis.z);
                 if (shapes[selected_r.num].arr.axis.x)
-                    im::DragInt("Limit X", &shapes[selected_r.num].arr.limit.x);
+                    im::DragInt("Limit X", &shapes[selected_r.num].arr.limit.x, 1, 0, INT_MAX);
                 if (shapes[selected_r.num].arr.axis.y)
-                    im::DragInt("Limit Y", &shapes[selected_r.num].arr.limit.y);
+                    im::DragInt("Limit Y", &shapes[selected_r.num].arr.limit.y, 1, 0, INT_MAX);
                 if (shapes[selected_r.num].arr.axis.z)
-                    im::DragInt("Limit Z", &shapes[selected_r.num].arr.limit.z);
-                if (im::TreeNode("X Axis")) {
-                    if (shapes[selected_r.num].arr.axis.x) {
-                        im::DragFloat3("Pos", shapes[selected_r.num].arr.pos.x, 0.001f, -FLT_MAX, FLT_MAX);
+                    im::DragInt("Limit Z", &shapes[selected_r.num].arr.limit.z, 1, 0, INT_MAX);
+                if (shapes[selected_r.num].arr.axis.x)
+                    if (im::TreeNode("X Axis")) {
+                        if (shapes[selected_r.num].arr.axis.x) {
+                            im::DragFloat3("Pos", shapes[selected_r.num].arr.pos.x, 0.001f, -FLT_MAX, FLT_MAX);
+                            im::DragFloat3("Rot", shapes[selected_r.num].arr.rot.x, 0.001f, -FLT_MAX, FLT_MAX);
+                            im::DragFloat3("Scale", shapes[selected_r.num].arr.scale.x, 0.001f, -FLT_MAX, FLT_MAX);
+                        };
+                        im::TreePop();
                     };
-                    if (shapes[selected_r.num].arr.axis.x) {
-                        im::DragFloat3("Rot", shapes[selected_r.num].arr.rot.x, 0.001f, -FLT_MAX, FLT_MAX);
+                if (shapes[selected_r.num].arr.axis.y)
+                    if (im::TreeNode("Y Axis")) {
+                        if (shapes[selected_r.num].arr.axis.y) {
+                            im::DragFloat3("Pos", shapes[selected_r.num].arr.pos.y, 0.001f, -FLT_MAX, FLT_MAX);
+                            im::DragFloat3("Rot", shapes[selected_r.num].arr.rot.y, 0.001f, -FLT_MAX, FLT_MAX);
+                            im::DragFloat3("Scale", shapes[selected_r.num].arr.scale.y, 0.001f, -FLT_MAX, FLT_MAX);
+                        };
+                        im::TreePop();
                     };
-                    if (shapes[selected_r.num].arr.axis.x) {
-                        im::DragFloat3("Scale", shapes[selected_r.num].arr.scale.x, 0.001f, -FLT_MAX, FLT_MAX);
+                if (shapes[selected_r.num].arr.axis.z)
+                    if (im::TreeNode("Z Axis")) {
+                        if (shapes[selected_r.num].arr.axis.z) {
+                            im::DragFloat3("Pos", shapes[selected_r.num].arr.pos.z, 0.001f, -FLT_MAX, FLT_MAX);
+                            im::DragFloat3("Rot", shapes[selected_r.num].arr.rot.z, 0.001f, -FLT_MAX, FLT_MAX);
+                            im::DragFloat3("Scale", shapes[selected_r.num].arr.scale.z, 0.001f, -FLT_MAX, FLT_MAX);
+                        };
+                        im::TreePop();
                     };
-                    im::TreePop();
-                };
-                if (shapes[selected_r.num].arr.axis.y) {
-                    im::InputFloat("Y Axis Pos X", &shapes[selected_r.num].arr.pos.y.x, 0.001f, 0.05f);
-                    im::InputFloat("Y Axis Pos Y", &shapes[selected_r.num].arr.pos.y.y, 0.001f, 0.05f);
-                    im::InputFloat("Y Axis Pos Z", &shapes[selected_r.num].arr.pos.y.z, 0.001f, 0.05f);
-                };
-                if (shapes[selected_r.num].arr.axis.y) {
-                    im::InputFloat("Y Axis Rot X", &shapes[selected_r.num].arr.rot.y.x, 0.001f, 0.05f);
-                    im::InputFloat("Y Axis Rot Y", &shapes[selected_r.num].arr.rot.y.y, 0.001f, 0.05f);
-                    im::InputFloat("Y Axis Rot Z", &shapes[selected_r.num].arr.rot.y.z, 0.001f, 0.05f);
-                };
-                if (shapes[selected_r.num].arr.axis.y) {
-                    im::InputFloat("Y Axis Scale X", &shapes[selected_r.num].arr.scale.y.x, 0.001f, 0.05f);
-                    im::InputFloat("Y Axis Scale Y", &shapes[selected_r.num].arr.scale.y.y, 0.001f, 0.05f);
-                    im::InputFloat("Y Axis Scale Z", &shapes[selected_r.num].arr.scale.y.z, 0.001f, 0.05f);
-                };
-                if (shapes[selected_r.num].arr.axis.z) {
-                    im::InputFloat("Z Axis Pos X", &shapes[selected_r.num].arr.pos.z.x, 0.001f, 0.05f);
-                    im::InputFloat("Z Axis Pos Y", &shapes[selected_r.num].arr.pos.z.y, 0.001f, 0.05f);
-                    im::InputFloat("Z Axis Pos Z", &shapes[selected_r.num].arr.pos.z.z, 0.001f, 0.05f);
-                };
-                if (shapes[selected_r.num].arr.axis.z) {
-                    im::InputFloat("Z Axis Rot X", &shapes[selected_r.num].arr.rot.z.x, 0.001f, 0.05f);
-                    im::InputFloat("Z Axis Rot Y", &shapes[selected_r.num].arr.rot.z.y, 0.001f, 0.05f);
-                    im::InputFloat("Z Axis Rot Z", &shapes[selected_r.num].arr.rot.z.z, 0.001f, 0.05f);
-                };
-                if (shapes[selected_r.num].arr.axis.z) {
-                    im::InputFloat("Z Axis Scale X", &shapes[selected_r.num].arr.scale.z.x, 0.001f, 0.05f);
-                    im::InputFloat("Z Axis Scale Y", &shapes[selected_r.num].arr.scale.z.y, 0.001f, 0.05f);
-                    im::InputFloat("Z Axis Scale Z", &shapes[selected_r.num].arr.scale.z.z, 0.001f, 0.05f);
-                };
             };
         }
         t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
