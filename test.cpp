@@ -24,6 +24,7 @@ XsShape v;
 
 int main(int argc, char* argv[]) {
     XsLib engine("oyun motoru");
+    engine.load("new_proj.xs.save");
     XsVertices cube_vert = XsOBJLoader("data/magic.obj", XS_VERTEX);
     XsTextureSTB tex("data/pattern32.png");
     engine << v;
@@ -31,8 +32,6 @@ int main(int argc, char* argv[]) {
     engine << tex;
     engine << cube_vert;
 
-    engine.Draw();
+    engine.Start();
     return 0;
 };
-
-
