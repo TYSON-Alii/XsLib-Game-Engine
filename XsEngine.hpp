@@ -4,6 +4,7 @@
 #define glBeg glBegin
 #define glL glLoadIdentity
 #define im ImGui
+#include <thread>
 using namespace std;
 
 v3f XsHexToRGB(int hex) {
@@ -13,6 +14,7 @@ v3f XsHexToRGB(int hex) {
     _t.z = ((hex) & 0xff) / 255.f;
     return _t;
 };
+void open_with_notepad(const char* const file_name) { system(string(string("notepad \"") + file_name + "\"").c_str()); };
 class XsLib;
 class XsLib {
 public:
@@ -222,6 +224,19 @@ private:
         XsTextureSTB tx;
         string name;
     };
+    struct v3f_3 {
+        v3f x = 0;
+        v3f y = 0;
+        v3f z = 0;
+    };
+    struct Array_t {
+        v3f_3 pos;
+        v3f_3 rot;
+        v3f_3 scale;
+        v3i limit = 1;
+        v3b axis = false;
+        bool use = false;
+    };
     struct Shape_t {
         XsShape* sh = nullptr;
         v3f origin = 0;
@@ -238,6 +253,7 @@ private:
         float w_line = 1;
         bool advanced = false;
         bool use_shader = false;
+        Array_t arr;
         string name;
     };
     struct Shader_t {
@@ -306,8 +322,11 @@ private:
     char** _tsv;
     ImGuiStyle* t_nthm;
     ImGuiStyle _thm;
-    v2f left_panel_size = v2f(7.5, 1);
+    v2f left_panel_size = v2f(7, 1);
     v2f right_panel_size = v2f(5, 1);
+    int r_panel_menu = 0;
+
+    v2f tool_pos;
 
     struct Select_t {
         string type = "none";
@@ -484,6 +503,8 @@ private:
         };
     };
     XsSaver* file;
+
+    string loaded_file;
 public:
     void save(const char* file_name) {
         file = new XsSaver(file_name);
@@ -523,7 +544,8 @@ public:
         camera.near_ = file->getf("cam_near");
         camera.far_ = file->getf("cam_far");
         camera.fov = file->getf("cam_fov");
-    }
+        loaded_file = file_name;
+    };
     XsCamera camera;
     sf::RenderWindow window;
     sf::Event event;
@@ -644,7 +666,7 @@ public:
     };
     */
 
-    void Draw() {
+    void Start() {
         while (window.isOpen()) {
             s_fps = std::chrono::high_resolution_clock::now();
             for (auto& i : pushs)
@@ -662,8 +684,8 @@ public:
                     i.push_data();
                     break;
                 };
-            window.pollEvent(event);
             ImGui::SFML::ProcessEvent(event);
+            window.pollEvent(event);
             if (event.type == sf::Event::Closed) {
                 selected.type = "none";
                 selected.num = 0;
@@ -708,12 +730,78 @@ public:
                         glPointSize(i.s_point);
                     elif(i.gl_vert == 1 and shapes[selected_r.num].s_vert > 1)
                         glLineWidth(i.w_line);
-                    if (i.s_texture > 0) {
-                        i.sh->draw(vertices[i.s_vert - 2].vr, textures[i.s_texture - 1].tx, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
-                        glBindTexture(GL_TEXTURE_2D, 0);
+                    if (i.arr.use == false) {
+                        if (i.s_texture > 0) {
+                            i.sh->draw(vertices[i.s_vert - 2].vr, textures[i.s_texture - 1].tx, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
+                            glBindTexture(GL_TEXTURE_2D, 0);
+                        }
+                        else
+                            i.sh->draw(vertices[i.s_vert - 2].vr, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
                     }
-                    else
-                        i.sh->draw(vertices[i.s_vert - 2].vr, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
+                    else {
+                        if (i.s_texture > 0) {
+                            textures[i.s_texture - 1].tx.bind();
+                            const XsEnum _xs = f_XsEnum(i.xs_vert);
+                            const GLenum _gl = f_GLenum(i.gl_vert);
+                            const XsShape _ts = *i.sh;
+                            if (i.arr.axis.x)
+                                for (volatile size_t j = 0; j < i.arr.limit.x; j++) {
+                                    i.sh->pos = i.arr.pos.x * j;
+                                    i.sh->rot = i.arr.rot.x * j;
+                                    i.sh->scale = i.arr.scale.x * j;
+                                    glL();
+                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
+                                }
+                            if (i.arr.axis.y) {
+                                *i.sh = _ts;
+                                for (volatile size_t j = 0; j < i.arr.limit.y; j++) {
+                                    i.sh->pos += i.arr.pos.y;
+                                    i.sh->rot += i.arr.rot.y;
+                                    i.sh->scale += i.arr.scale.y;
+                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
+                                };
+                            }
+                            if (i.arr.axis.z) {
+                                *i.sh = _ts;
+                                for (volatile size_t j = 0; j < i.arr.limit.z; j++) {
+                                    i.sh->pos += i.arr.pos.z;
+                                    i.sh->rot += i.arr.rot.z;
+                                    i.sh->scale += i.arr.scale.z;
+                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
+                                }
+                            }
+                            *i.sh = _ts;
+                            glBindTexture(GL_TEXTURE_2D, 0);
+                        }
+                        else {
+                            const XsEnum _xs = f_XsEnum(i.xs_vert);
+                            const GLenum _gl = f_GLenum(i.gl_vert);
+                            const XsShape _ts = *i.sh;
+                            if (i.arr.axis.x)
+                                for (volatile size_t j = 0; j < i.arr.limit.x; j++) {
+                                    i.sh->pos += i.arr.pos.x;
+                                    i.sh->rot += i.arr.rot.x;
+                                    i.sh->scale += i.arr.scale.x;
+                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
+                                }
+                            *i.sh = _ts;
+                            if (i.arr.axis.y)
+                                for (volatile size_t j = 0; j < i.arr.limit.y; j++) {
+                                    i.sh->pos += i.arr.pos.y;
+                                    i.sh->rot += i.arr.rot.y;
+                                    i.sh->scale += i.arr.scale.y;
+                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
+                                }
+                            *i.sh = _ts;
+                            if (i.arr.axis.z)
+                                for (volatile size_t j = 0; j < i.arr.limit.z; j++) {
+                                    i.sh->pos += i.arr.pos.z;
+                                    i.sh->rot += i.arr.rot.z;
+                                    i.sh->scale += i.arr.scale.z;
+                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
+                                }
+                        }
+                    }
                 }
                 elif(i.s_vert == 1) {
                     glL();
