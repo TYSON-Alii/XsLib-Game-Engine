@@ -746,9 +746,9 @@ public:
                             const XsShape _ts = *i.sh;
                             if (i.arr.axis.x)
                                 for (volatile size_t j = 0; j < i.arr.limit.x; j++) {
-                                    i.sh->pos = i.arr.pos.x * j;
-                                    i.sh->rot = i.arr.rot.x * j;
-                                    i.sh->scale = i.arr.scale.x * j;
+                                    i.sh->pos += i.arr.pos.x;
+                                    i.sh->rot += i.arr.rot.x;
+                                    i.sh->scale += i.arr.scale.x;
                                     glL();
                                     i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
                                 }
@@ -758,6 +758,7 @@ public:
                                     i.sh->pos += i.arr.pos.y;
                                     i.sh->rot += i.arr.rot.y;
                                     i.sh->scale += i.arr.scale.y;
+                                    glL();
                                     i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
                                 };
                             }
@@ -767,6 +768,7 @@ public:
                                     i.sh->pos += i.arr.pos.z;
                                     i.sh->rot += i.arr.rot.z;
                                     i.sh->scale += i.arr.scale.z;
+                                    glL();
                                     i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
                                 }
                             }
@@ -782,36 +784,113 @@ public:
                                     i.sh->pos += i.arr.pos.x;
                                     i.sh->rot += i.arr.rot.x;
                                     i.sh->scale += i.arr.scale.x;
+                                    glL();
                                     i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
                                 }
-                            *i.sh = _ts;
-                            if (i.arr.axis.y)
+                            if (i.arr.axis.y) {
+                                *i.sh = _ts;
                                 for (volatile size_t j = 0; j < i.arr.limit.y; j++) {
                                     i.sh->pos += i.arr.pos.y;
                                     i.sh->rot += i.arr.rot.y;
                                     i.sh->scale += i.arr.scale.y;
+                                    glL();
                                     i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
                                 }
-                            *i.sh = _ts;
-                            if (i.arr.axis.z)
+                            }
+                            if (i.arr.axis.z) {
+                                *i.sh = _ts;
                                 for (volatile size_t j = 0; j < i.arr.limit.z; j++) {
                                     i.sh->pos += i.arr.pos.z;
                                     i.sh->rot += i.arr.rot.z;
                                     i.sh->scale += i.arr.scale.z;
+                                    glL();
                                     i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
                                 }
+                            }
+                            *i.sh = _ts;
                         }
                     }
                 }
                 elif(i.s_vert == 1) {
                     glL();
-                    if (i.s_texture > 0) {
-                        textures[i.s_texture - 1].tx.bind();
-                        i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
-                        glBindTexture(GL_TEXTURE_2D, 0);
+                    if (i.arr.use == false)
+                        if (i.s_texture > 0) {
+                            textures[i.s_texture - 1].tx.bind();
+                            i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                            glBindTexture(GL_TEXTURE_2D, 0);
+                        }
+                        else
+                            i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                    else {
+                        if (i.s_texture > 0) {
+                            textures[i.s_texture - 1].tx.bind();
+                            const XsEnum _xs = f_XsEnum(i.xs_vert);
+                            const XsShape _ts = *i.sh;
+                            if (i.arr.axis.x)
+                                for (volatile size_t j = 0; j < i.arr.limit.x; j++) {
+                                    i.sh->pos += i.arr.pos.x;
+                                    i.sh->rot += i.arr.rot.x;
+                                    i.sh->scale += i.arr.scale.x;
+                                    glL();
+                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                                }
+                            if (i.arr.axis.y) {
+                                *i.sh = _ts;
+                                for (volatile size_t j = 0; j < i.arr.limit.y; j++) {
+                                    i.sh->pos += i.arr.pos.y;
+                                    i.sh->rot += i.arr.rot.y;
+                                    i.sh->scale += i.arr.scale.y;
+                                    glL();
+                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                                }
+                            }
+                            if (i.arr.axis.z) {
+                                *i.sh = _ts;
+                                for (volatile size_t j = 0; j < i.arr.limit.z; j++) {
+                                    i.sh->pos += i.arr.pos.z;
+                                    i.sh->rot += i.arr.rot.z;
+                                    i.sh->scale += i.arr.scale.z;
+                                    glL();
+                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                                }
+                            }
+                            *i.sh = _ts;
+                            glBindTexture(GL_TEXTURE_2D, 0);
+                        }
+                        else {
+                            const XsEnum _xs = f_XsEnum(i.xs_vert);
+                            const XsShape _ts = *i.sh;
+                            if (i.arr.axis.x)
+                                for (volatile size_t j = 0; j < i.arr.limit.x; j++) {
+                                    i.sh->pos += i.arr.pos.x;
+                                    i.sh->rot += i.arr.rot.x;
+                                    i.sh->scale += i.arr.scale.x;
+                                    glL();
+                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                                }
+                            if (i.arr.axis.y) {
+                                *i.sh = _ts;
+                                for (volatile size_t j = 0; j < i.arr.limit.y; j++) {
+                                    i.sh->pos += i.arr.pos.y;
+                                    i.sh->rot += i.arr.rot.y;
+                                    i.sh->scale += i.arr.scale.y;
+                                    glL();
+                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                                }
+                            }
+                            if (i.arr.axis.z) {
+                                *i.sh = _ts;
+                                for (volatile size_t j = 0; j < i.arr.limit.z; j++) {
+                                    i.sh->pos += i.arr.pos.z;
+                                    i.sh->rot += i.arr.rot.z;
+                                    i.sh->scale += i.arr.scale.z;
+                                    glL();
+                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                                }
+                            }
+                            *i.sh = _ts;
+                        };
                     }
-                    else
-                        i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
                 }
             };
 
