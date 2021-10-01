@@ -267,55 +267,15 @@ void XsLib::ui() {
             };
             im::Checkbox("Array", &shapes[selected_r.num].arr.use);
             if (shapes[selected_r.num].arr.use) {
-                im::PushStyleColor(ImGuiCol_Text, ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.76));
-                im::Checkbox("X", &shapes[selected_r.num].arr.axis.x);
-                im::PopStyleColor();
-                im::SameLine(50, -50);
-                im::PushStyleColor(ImGuiCol_Text, ImVec4(XsDarkGreen.x, XsDarkGreen.y, XsDarkGreen.z, 0.76));
-                im::Checkbox("Y", &shapes[selected_r.num].arr.axis.y);
-                im::PopStyleColor();
-                im::SameLine(100, -100);
-                im::PushStyleColor(ImGuiCol_Text, ImVec4(XsBlue.x, XsBlue.y, XsBlue.z, 0.76));
-                im::Checkbox("Z", &shapes[selected_r.num].arr.axis.z);
                 if (shapes[selected_r.num].s_vert > 1)
                     if (im::Button("Export Vertices", { im::GetWindowSize().x - 15, 0 })) {
                         selected.type = "export array";
                         selected.num = shapes[selected_r.num].s_vert;
                     };
-                im::PopStyleColor();
-                if (shapes[selected_r.num].arr.axis.x)
-                    im::DragInt("Limit X", &shapes[selected_r.num].arr.limit.x, 1, 0, INT_MAX);
-                if (shapes[selected_r.num].arr.axis.y)
-                    im::DragInt("Limit Y", &shapes[selected_r.num].arr.limit.y, 1, 0, INT_MAX);
-                if (shapes[selected_r.num].arr.axis.z)
-                    im::DragInt("Limit Z", &shapes[selected_r.num].arr.limit.z, 1, 0, INT_MAX);
-                if (shapes[selected_r.num].arr.axis.x)
-                    if (im::TreeNode("X Axis")) {
-                        if (shapes[selected_r.num].arr.axis.x) {
-                            im::DragFloat3("Pos", shapes[selected_r.num].arr.pos.x, 0.001f, -FLT_MAX, FLT_MAX);
-                            im::DragFloat3("Rot", shapes[selected_r.num].arr.rot.x, 0.001f, -FLT_MAX, FLT_MAX);
-                            im::DragFloat3("Scale", shapes[selected_r.num].arr.scale.x, 0.001f, -FLT_MAX, FLT_MAX);
-                        };
-                        im::TreePop();
-                    };
-                if (shapes[selected_r.num].arr.axis.y)
-                    if (im::TreeNode("Y Axis")) {
-                        if (shapes[selected_r.num].arr.axis.y) {
-                            im::DragFloat3("Pos", shapes[selected_r.num].arr.pos.y, 0.001f, -FLT_MAX, FLT_MAX);
-                            im::DragFloat3("Rot", shapes[selected_r.num].arr.rot.y, 0.001f, -FLT_MAX, FLT_MAX);
-                            im::DragFloat3("Scale", shapes[selected_r.num].arr.scale.y, 0.001f, -FLT_MAX, FLT_MAX);
-                        };
-                        im::TreePop();
-                    };
-                if (shapes[selected_r.num].arr.axis.z)
-                    if (im::TreeNode("Z Axis")) {
-                        if (shapes[selected_r.num].arr.axis.z) {
-                            im::DragFloat3("Pos", shapes[selected_r.num].arr.pos.z, 0.001f, -FLT_MAX, FLT_MAX);
-                            im::DragFloat3("Rot", shapes[selected_r.num].arr.rot.z, 0.001f, -FLT_MAX, FLT_MAX);
-                            im::DragFloat3("Scale", shapes[selected_r.num].arr.scale.z, 0.001f, -FLT_MAX, FLT_MAX);
-                        };
-                        im::TreePop();
-                    };
+                im::DragInt("Limit", &shapes[selected_r.num].arr.limit, 1, 0, INT_MAX);
+                im::DragFloat3("Pos", shapes[selected_r.num].arr.pos, 0.001f, -FLT_MAX, FLT_MAX);
+                im::DragFloat3("Rot", shapes[selected_r.num].arr.rot, 0.001f, -FLT_MAX, FLT_MAX);
+                im::DragFloat3("Scale", shapes[selected_r.num].arr.scale, 0.001f, -FLT_MAX, FLT_MAX);
             };
         }
         t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
@@ -569,13 +529,12 @@ void XsLib::ui() {
             Vertices_t new_vert;
             XsVertices _tv = vertices[shapes[selected_r.num].s_vert - 2].vr;
             new_vert.name = export_array_name;
-            if (shapes[selected_r.num].arr.axis.x)
-                for (volatile size_t j = 0; j < shapes[selected_r.num].arr.limit.x; j++) {
-                    XsOrigin(_tv, _xs, shapes[selected_r.num].arr.pos.x + _sh.pos);
-                    //XsRotate(_tv, _xs, shapes[selected_r.num].arr.rot.x + _sh.rot);
-                    XsScale(_tv, _xs, shapes[selected_r.num].arr.scale.x + _sh.scale);
-                    XsJoin(new_vert.vr, _xs, _tv, _xs);
-                }
+            for (volatile size_t j = 0; j < shapes[selected_r.num].arr.limit; j++) {
+                XsOrigin(_tv, _xs, shapes[selected_r.num].arr.pos + _sh.pos);
+                //XsRotate(_tv, _xs, shapes[selected_r.num].arr.rot + _sh.rot);
+                XsScale(_tv, _xs, shapes[selected_r.num].arr.scale + _sh.scale);
+                XsJoin(new_vert.vr, _xs, _tv, _xs);
+            }
             vertices.push_back(new_vert);
             vert_name.push_back(_strdup(new_vert.name.c_str()));
             selected.type = "none";
