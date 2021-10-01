@@ -225,9 +225,9 @@ private:
         string name;
     };
     struct Array_t {
-        v3f pos;
-        v3f rot;
-        v3f scale;
+        v3f pos = 0;
+        v3f rot = 0;
+        v3f scale = 0;
         int limit = 1;
         bool use = false;
     };
