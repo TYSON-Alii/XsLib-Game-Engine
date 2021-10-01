@@ -504,6 +504,7 @@ private:
     };
     XsSaver* file;
 
+    string export_array_name = "Array";
     string loaded_file;
 public:
     void save(const char* file_name) {
