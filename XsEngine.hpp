@@ -224,17 +224,11 @@ private:
         XsTextureSTB tx;
         string name;
     };
-    struct v3f_3 {
-        v3f x = 0;
-        v3f y = 0;
-        v3f z = 0;
-    };
     struct Array_t {
-        v3f_3 pos;
-        v3f_3 rot;
-        v3f_3 scale;
-        v3i limit = 1;
-        v3b axis = false;
+        v3f pos;
+        v3f rot;
+        v3f scale;
+        int limit = 1;
         bool use = false;
     };
     struct Shape_t {
@@ -745,33 +739,12 @@ public:
                             const XsEnum _xs = f_XsEnum(i.xs_vert);
                             const GLenum _gl = f_GLenum(i.gl_vert);
                             const XsShape _ts = *i.sh;
-                            if (i.arr.axis.x)
-                                for (volatile size_t j = 0; j < i.arr.limit.x; j++) {
-                                    i.sh->pos += i.arr.pos.x;
-                                    i.sh->rot += i.arr.rot.x;
-                                    i.sh->scale += i.arr.scale.x;
-                                    glL();
-                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
-                                }
-                            if (i.arr.axis.y) {
-                                *i.sh = _ts;
-                                for (volatile size_t j = 0; j < i.arr.limit.y; j++) {
-                                    i.sh->pos += i.arr.pos.y;
-                                    i.sh->rot += i.arr.rot.y;
-                                    i.sh->scale += i.arr.scale.y;
-                                    glL();
-                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
-                                };
-                            }
-                            if (i.arr.axis.z) {
-                                *i.sh = _ts;
-                                for (volatile size_t j = 0; j < i.arr.limit.z; j++) {
-                                    i.sh->pos += i.arr.pos.z;
-                                    i.sh->rot += i.arr.rot.z;
-                                    i.sh->scale += i.arr.scale.z;
-                                    glL();
-                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
-                                }
+                            for (volatile size_t j = 0; j < i.arr.limit; j++) {
+                                i.sh->pos += i.arr.pos.x;
+                                i.sh->rot += i.arr.rot.x;
+                                i.sh->scale += i.arr.scale.x;
+                                glL();
+                                i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
                             }
                             *i.sh = _ts;
                             glBindTexture(GL_TEXTURE_2D, 0);
@@ -780,33 +753,12 @@ public:
                             const XsEnum _xs = f_XsEnum(i.xs_vert);
                             const GLenum _gl = f_GLenum(i.gl_vert);
                             const XsShape _ts = *i.sh;
-                            if (i.arr.axis.x)
-                                for (volatile size_t j = 0; j < i.arr.limit.x; j++) {
-                                    i.sh->pos += i.arr.pos.x;
-                                    i.sh->rot += i.arr.rot.x;
-                                    i.sh->scale += i.arr.scale.x;
-                                    glL();
-                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
-                                }
-                            if (i.arr.axis.y) {
-                                *i.sh = _ts;
-                                for (volatile size_t j = 0; j < i.arr.limit.y; j++) {
-                                    i.sh->pos += i.arr.pos.y;
-                                    i.sh->rot += i.arr.rot.y;
-                                    i.sh->scale += i.arr.scale.y;
-                                    glL();
-                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
-                                }
-                            }
-                            if (i.arr.axis.z) {
-                                *i.sh = _ts;
-                                for (volatile size_t j = 0; j < i.arr.limit.z; j++) {
-                                    i.sh->pos += i.arr.pos.z;
-                                    i.sh->rot += i.arr.rot.z;
-                                    i.sh->scale += i.arr.scale.z;
-                                    glL();
-                                    i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
-                                }
+                            for (volatile size_t j = 0; j < i.arr.limit; j++) {
+                                i.sh->pos += i.arr.pos.x;
+                                i.sh->rot += i.arr.rot.x;
+                                i.sh->scale += i.arr.scale.x;
+                                glL();
+                                i.sh->draw(vertices[i.s_vert - 2].vr, _xs, _gl);
                             }
                             *i.sh = _ts;
                         }
@@ -827,33 +779,12 @@ public:
                             textures[i.s_texture - 1].tx.bind();
                             const XsEnum _xs = f_XsEnum(i.xs_vert);
                             const XsShape _ts = *i.sh;
-                            if (i.arr.axis.x)
-                                for (volatile size_t j = 0; j < i.arr.limit.x; j++) {
-                                    i.sh->pos += i.arr.pos.x;
-                                    i.sh->rot += i.arr.rot.x;
-                                    i.sh->scale += i.arr.scale.x;
-                                    glL();
-                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
-                                }
-                            if (i.arr.axis.y) {
-                                *i.sh = _ts;
-                                for (volatile size_t j = 0; j < i.arr.limit.y; j++) {
-                                    i.sh->pos += i.arr.pos.y;
-                                    i.sh->rot += i.arr.rot.y;
-                                    i.sh->scale += i.arr.scale.y;
-                                    glL();
-                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
-                                }
-                            }
-                            if (i.arr.axis.z) {
-                                *i.sh = _ts;
-                                for (volatile size_t j = 0; j < i.arr.limit.z; j++) {
-                                    i.sh->pos += i.arr.pos.z;
-                                    i.sh->rot += i.arr.rot.z;
-                                    i.sh->scale += i.arr.scale.z;
-                                    glL();
-                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
-                                }
+                            for (volatile size_t j = 0; j < i.arr.limit; j++) {
+                                i.sh->pos += i.arr.pos.x;
+                                i.sh->rot += i.arr.rot.x;
+                                i.sh->scale += i.arr.scale.x;
+                                glL();
+                                i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
                             }
                             *i.sh = _ts;
                             glBindTexture(GL_TEXTURE_2D, 0);
@@ -861,33 +792,12 @@ public:
                         else {
                             const XsEnum _xs = f_XsEnum(i.xs_vert);
                             const XsShape _ts = *i.sh;
-                            if (i.arr.axis.x)
-                                for (volatile size_t j = 0; j < i.arr.limit.x; j++) {
-                                    i.sh->pos += i.arr.pos.x;
-                                    i.sh->rot += i.arr.rot.x;
-                                    i.sh->scale += i.arr.scale.x;
-                                    glL();
-                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
-                                }
-                            if (i.arr.axis.y) {
-                                *i.sh = _ts;
-                                for (volatile size_t j = 0; j < i.arr.limit.y; j++) {
-                                    i.sh->pos += i.arr.pos.y;
-                                    i.sh->rot += i.arr.rot.y;
-                                    i.sh->scale += i.arr.scale.y;
-                                    glL();
-                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
-                                }
-                            }
-                            if (i.arr.axis.z) {
-                                *i.sh = _ts;
-                                for (volatile size_t j = 0; j < i.arr.limit.z; j++) {
-                                    i.sh->pos += i.arr.pos.z;
-                                    i.sh->rot += i.arr.rot.z;
-                                    i.sh->scale += i.arr.scale.z;
-                                    glL();
-                                    i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
-                                }
+                            for (volatile size_t j = 0; j < i.arr.limit; j++) {
+                                i.sh->pos += i.arr.pos.x;
+                                i.sh->rot += i.arr.rot.x;
+                                i.sh->scale += i.arr.scale.x;
+                                glL();
+                                i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
                             }
                             *i.sh = _ts;
                         };
