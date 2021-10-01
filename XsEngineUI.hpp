@@ -255,23 +255,34 @@ void XsLib::ui() {
                 _tsv = &coll_name[0];
                 im::Combo("Collission", &shapes[selected_r.num].s_coll, _tsv, coll_name.size());
                 if (shapes[selected_r.num].s_coll > 0) {
+                    im::Checkbox("Lock Shape", &shapes[selected_r.num].lock_coll_to_shape);
+                    im::Checkbox("Show", &shapes[selected_r.num].show_coll);
                     ImGui::DragFloat3("position ", colls[shapes[selected_r.num].s_coll - 1].cl.pos, 0.01f, -FLT_MAX, FLT_MAX);
                     ImGui::DragFloat3("scale ", colls[shapes[selected_r.num].s_coll - 1].cl.scale, 0.01f, -FLT_MAX, FLT_MAX);
                     //if (im::Button((shapes[selected_r.num].lock_coll_to_shape == false) ? "Lock" : "Un-Lock", { im::GetWindowSize().x - 20, 0 }))
                     //    shapes[selected_r.num].lock_coll_to_shape = !shapes[selected_r.num].lock_coll_to_shape;
                     //if (im::Button("Show", { im::GetWindowSize().x - 20, 0 }))
                     //    shapes[selected_r.num].show_coll = !shapes[selected_r.num].show_coll;
-                    im::Checkbox("Lock Shape", &shapes[selected_r.num].lock_coll_to_shape);
-                    im::Checkbox("Show", &shapes[selected_r.num].show_coll);
                 };
             };
             im::Checkbox("Array", &shapes[selected_r.num].arr.use);
             if (shapes[selected_r.num].arr.use) {
+                im::PushStyleColor(ImGuiCol_Text, ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.76));
                 im::Checkbox("X", &shapes[selected_r.num].arr.axis.x);
+                im::PopStyleColor();
                 im::SameLine(50, -50);
+                im::PushStyleColor(ImGuiCol_Text, ImVec4(XsDarkGreen.x, XsDarkGreen.y, XsDarkGreen.z, 0.76));
                 im::Checkbox("Y", &shapes[selected_r.num].arr.axis.y);
+                im::PopStyleColor();
                 im::SameLine(100, -100);
+                im::PushStyleColor(ImGuiCol_Text, ImVec4(XsBlue.x, XsBlue.y, XsBlue.z, 0.76));
                 im::Checkbox("Z", &shapes[selected_r.num].arr.axis.z);
+                if (shapes[selected_r.num].s_vert > 1)
+                    if (im::Button("Export Vertices", { im::GetWindowSize().x - 15, 0 })) {
+                        selected.type = "export array";
+                        selected.num = shapes[selected_r.num].s_vert;
+                    };
+                im::PopStyleColor();
                 if (shapes[selected_r.num].arr.axis.x)
                     im::DragInt("Limit X", &shapes[selected_r.num].arr.limit.x, 1, 0, INT_MAX);
                 if (shapes[selected_r.num].arr.axis.y)
@@ -546,6 +557,40 @@ void XsLib::ui() {
             if (XsIsKeyPressed(XS_KEY_ESC))
                 ImGuiFileDialog::Instance()->Close();
         }
+    }
+    elif (selected.type == "export array") {
+        im::Begin("Array to Vert", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+        im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        im::SetWindowSize({ 250, 90 });
+        im::InputText("Name", &export_array_name);
+        if (im::Button("Create")) {
+            const XsShape _sh = *shapes[selected_r.num].sh;
+            const XsEnum _xs = f_XsEnum(shapes[selected_r.num].xs_vert);
+            Vertices_t new_vert;
+            XsVertices _tv = vertices[shapes[selected_r.num].s_vert - 2].vr;
+            new_vert.name = export_array_name;
+            if (shapes[selected_r.num].arr.axis.x)
+                for (volatile size_t j = 0; j < shapes[selected_r.num].arr.limit.x; j++) {
+                    XsOrigin(_tv, _xs, shapes[selected_r.num].arr.pos.x + _sh.pos);
+                    //XsRotate(_tv, _xs, shapes[selected_r.num].arr.rot.x + _sh.rot);
+                    XsScale(_tv, _xs, shapes[selected_r.num].arr.scale.x + _sh.scale);
+                    XsJoin(new_vert.vr, _xs, _tv, _xs);
+                }
+            vertices.push_back(new_vert);
+            vert_name.push_back(_strdup(new_vert.name.c_str()));
+            selected.type = "none";
+            selected.num = -1;
+        };
+        t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
+        t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.886);
+        t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
+        im::SameLine(ImGui::GetWindowSize().x - 60, -100);
+        if (im::Button("Cancel")) {
+            selected.type = "none";
+            selected.num = -1;
+        };
+        *t_nthm = _thm;
+        im::End();
     }
 
     im::Begin("Log", (bool*)0, ImGuiWindowFlags_NoMove);
