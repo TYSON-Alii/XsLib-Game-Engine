@@ -14,15 +14,16 @@ void XsLib::ui() {
     im::PopStyleColor();
     im::End();
 
-    im::Begin(WindowName, (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+    im::Begin(WindowName, (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
     t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 1.00f);
     t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.70f);
     t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.60f);
-    if (im::Button("Environment", { im::GetWindowSize().x / 2, 0 }))
+    im::BeginMenuBar();
+    if (im::MenuItem("Environment"))
         r_panel_menu = 0;
-    im::SameLine(im::GetWindowSize().x / 2 + 10, -50);
-    if (im::Button("File", { im::GetWindowSize().x / 2 - 15, 0 }))
+    if (im::MenuItem("File"))
         r_panel_menu = 1;
+    im::EndMenuBar();
     im::SetWindowPos({ 0, 0 });
     *t_nthm = _thm;
     im::SetWindowSize({ camera.viewport.x / left_panel_size.x, camera.viewport.y });
@@ -198,7 +199,7 @@ void XsLib::ui() {
     };
     im::End();
     if (selected.type == "delete") {
-        im::Begin(WindowName, (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+        im::Begin(string(string(WindowName) + "    ").c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
         im::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         im::SetWindowSize({ 350, 130 });
         im::Text("A shape will be deleted, do you confirm?");
@@ -552,22 +553,167 @@ void XsLib::ui() {
         im::End();
     }
 
-    im::Begin("Log", (bool*)0, ImGuiWindowFlags_NoMove);
-    im::SetWindowPos({ camera.viewport.x / left_panel_size.x, camera.viewport.y - (ImGui::GetWindowSize().y) + 20 });
+    bool item_hovered = false;
+    string item_path;
+    im::Begin("Logdsf", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+    im::SetWindowPos({ camera.viewport.x / left_panel_size.x, camera.viewport.y - (ImGui::GetWindowSize().y) });
     im::SetWindowSize({ selected_r.type == "shape" ? (camera.viewport.x - camera.viewport.x / left_panel_size.x - camera.viewport.x / right_panel_size.x) : (camera.viewport.x - camera.viewport.x / left_panel_size.x), (ImGui::GetWindowSize().y > camera.viewport.y / 1.01) ? float(camera.viewport.y / 1.01) : float(ImGui::GetWindowSize().y) });
-    for (auto& i : Log.data) {
-        if (them == 0) {
-            im::PushStyleColor(ImGuiCol_Text, ImVec4(i.color.x, i.color.y, i.color.z, 1));
-            im::Text(i.text_cstr());
-            im::PopStyleColor();
+    log_y = im::GetWindowSize().y;
+    im::BeginMenuBar();
+    if (im::MenuItem("Log"))
+        selected_a = "log";
+    if (im::MenuItem("File"))
+        selected_a = "file";
+    im::EndMenuBar();
+    if (selected_a == "log")
+        for (auto& i : Log.data) {
+            if (them == 0) {
+                im::PushStyleColor(ImGuiCol_Text, ImVec4(i.color.x, i.color.y, i.color.z, 1));
+                im::Text(i.text_cstr());
+                im::PopStyleColor();
+            }
+            else {
+                im::PushStyleColor(ImGuiCol_Text, i.color == 1.f ? ImVec4(0, 0, 0, 1) : ImVec4(i.color.x, i.color.y, i.color.z, 1));
+                im::Text(i.text_cstr());
+                im::PopStyleColor();
+            };
         }
-        else {
-            im::PushStyleColor(ImGuiCol_Text, i.color == 1.f ? ImVec4(0, 0, 0, 1) : ImVec4(i.color.x, i.color.y, i.color.z, 1));
-            im::Text(i.text_cstr());
-            im::PopStyleColor();
-        };
+    elif(selected_a == "file") {
+        int j = 0;
+        t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 1.00f);
+        t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.70f);
+        t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.60f);
+        if (im::ImageButton(updir_icon, { 28, 20 }))
+            path = path.substr(0, path.find_last_of("/\\"));
+        *t_nthm = _thm;
+        im::SameLine(48, -50);
+        im::ImageButton(folder_icon, {20, 20});
+        im::SameLine(80, -100);
+        im::InputText("Path", &path);
+        for (const auto& i : filesystem::directory_iterator(path)) {
+            if (i.is_directory()) {
+                t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 1.00f);
+                t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.70f);
+                t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsGrey.x, XsGrey.y, XsGrey.z, 0.60f);
+                im::ImageButton(folder_icon, { 93, 90 });
+                if (im::IsItemHovered()) {
+                    if (im::IsMouseDoubleClicked(0))
+                        path = i.path().string();
+                    else {
+                        item_hovered = true;
+                        item_path = i.path().string();
+                    }
+                }
+                *t_nthm = _thm;
+            }
+            else {
+                if (i.path().string() == preview_path)
+                    t_nthm->Colors[ImGuiCol_Button] = ImVec4(0.45f, 0.31f, 0.85f, 1.00f);
+                else
+                    t_nthm->Colors[ImGuiCol_Button] = ImVec4(0.12f, 0.10f, 0.21f, 1.00f);
+                t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(0.45f, 0.31f, 0.85f, 1.00f);
+                t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(0.37f, 0.17f, 0.69f, 1.00f);
+                im::ImageButton(i.path().string().ends_with(".png") ? imagefile_icon : (i.path().string().ends_with(".obj") or i.path().string().ends_with(".xs.model")) ? model_icon : textfile_icon, { 93, 90 });
+                if (im::IsItemClicked()) {
+                    is_drop = true;
+                    drop_path = i.path().string();
+                    if (i.path().string().ends_with(".png")) {
+                        if (i.path().string() != preview_path) {
+                            preview_path = i.path().string();
+                            preview_tex.loadFromFile(preview_path.c_str());
+                            im_preview = true;
+                            preview_tm.restart();
+                        }
+                        else {
+                            preview_path.clear();
+                            im_preview = false;
+                        };
+                    }
+                };
+                if (im::IsItemHovered()) {
+                    item_hovered = true;
+                    item_path = i.path().string();
+                }
+                *t_nthm = _thm;
+            }
+            j++;
+            if ((50 * (j) + (5 * ((j) + 1))) > im::GetWindowSize().x - (50 * (j + 1) + (5 * ((j + 1) + 1))))
+                j = 0;
+            if (j != 0)
+                im::SameLine(50 * j + (5 * (j + 1)) + 3, 50 * j);
+        }
     };
     im::End();
+
+    if (im_preview) {
+        if (preview_tm.getMilliSeconds() > 2) {
+            im::Begin(filesystem::path(preview_path).filename().string().c_str(),(bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground);
+            vex2f _t = vex2f(preview_tex.getSize().x, preview_tex.getSize().y);
+            _t.normalize();
+            im::SetWindowSize({ 350.f, 350.f * _t.y + 50});
+            im::SetWindowPos({ (selected_r.type == "shape") ? (camera.viewport.x - ImGui::GetWindowSize().x - (camera.viewport.x / right_panel_size.x)) : (camera.viewport.x - ImGui::GetWindowSize().x), camera.viewport.y - ImGui::GetWindowSize().y - log_y });
+            ImGui::Image(preview_tex, sf::Vector2f(ImGui::GetWindowSize().x, (ImGui::GetWindowSize().x) * _t.y));
+            im::End();
+        };
+    };
+
+    if (item_hovered == true and is_drop == false) {
+        im::Begin("hoveredsdfa", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
+        im::SetWindowPos({ im::GetIO().MousePos.x + 15, im::GetIO().MousePos.y + 15 });
+        im::SetWindowSize({ 200, 200 });
+        im::Text(filesystem::path(item_path).filename().string().c_str());
+        im::End();
+    };
+
+    if (!XsIsKeyPressed(XS_MOUSE_LEFT)) {
+        if (im::GetIO().MousePos.x > camera.viewport.x / left_panel_size.x and im::GetIO().MousePos.y < log_y and (im::GetIO().MousePos.y < (selected_r.type == "shape") ? (camera.viewport.x - (camera.viewport.x / right_panel_size.x)) : (camera.viewport.x)))
+            if (drop_path != "") {
+                if (drop_path.ends_with(".png")) {
+                    Texture_t _t;
+                    _t.name = string("Texture ") + to_string(lefttexnum);
+                    _t.tx.load(drop_path.c_str());
+                    tex_name.push_back(_strdup(_t.name.c_str()));
+                    textures.push_back(_t);
+                    lefttexnum++;
+                    nw_tt.name = string("Texture ") + to_string(lefttexnum);
+                    Log << "Add a Texture";
+                    input_text = drop_path;
+                }
+                elif(drop_path.ends_with(".obj")) {
+                    Vertices_t _t;
+                    _t.name = string("Vertices ") + to_string(leftvertnum);
+                    _t.vr = XsOBJLoader(drop_path.c_str(), XS_VERTEX);
+                    vert_name.push_back(_strdup(_t.name.c_str()));
+                    vertices.push_back(_t);
+                    leftvertnum++;
+                    nw_vt.name = string("Vertices ") + to_string(leftvertnum);
+                    Log << "Add a Vertices";
+                    input_text = drop_path;
+                }
+                elif(drop_path.ends_with(".xs.model")) {
+                    Vertices_t _t;
+                    _t.name = string("Vertices ") + to_string(leftvertnum);
+                    _t.vr = XsModelLoader(drop_path.c_str());
+                    vert_name.push_back(_strdup(_t.name.c_str()));
+                    vertices.push_back(_t);
+                    leftvertnum++;
+                    nw_vt.name = string("Vertices ") + to_string(leftvertnum);
+                    Log << "Add a Vertices";
+                    input_text = drop_path;
+                };
+            };
+        is_drop = false;
+        drop_path.clear();
+    }
+    else {
+        if (is_drop) {
+            im::Begin("gfhgfgfg", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
+            im::SetWindowPos({ im::GetIO().MousePos.x + 15, im::GetIO().MousePos.y + 15 });
+            im::SetWindowSize({ 200, 200 });
+            im::Text(string("+" + filesystem::path(drop_path).filename().string()).c_str());
+            im::End();
+        }
+    };
 
     if (selected.type == "new") {
         im::Begin("New ", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
