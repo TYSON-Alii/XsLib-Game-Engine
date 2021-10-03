@@ -1,0 +1,16 @@
+c_string window_name oyun motoru
+vex2f cam_rot 1884.91 353.915
+float speed_x 80
+int them 0
+string input_text C:\Users\muham\OneDrive\Masaüstü\XS Test\test 0\data\deli_mayn.png
+int vert_load_format 1
+string selected_r_type none
+int selected_r_num 0
+string selected_type none
+int selected_num 0
+vex3f cam_pos 8.41006 3.53959 3.79556
+vex3f cam_rot -0.867044 -0.278562 -0.413083
+vex2f cam_viewp 1200 700
+float cam_near 0.2
+float cam_far 100
+float cam_fov 45
