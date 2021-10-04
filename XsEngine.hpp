@@ -26,7 +26,7 @@ v3f XsHexToRGB(int hex) {
 void open_with_notepad(const char* const file_name) { system(std::string(std::string("notepad \"") + file_name + "\"").c_str()); };
 class XsLib;
 class XsLib {
-private:
+protected:
     struct push_t {
         push_t() {};
         push_t(void (*push_v)(void), const char* code) {
@@ -80,50 +80,88 @@ private:
         int limit = 1;
         bool use = false;
     };
-    struct Shape_t {
-        XsShape* sh;
+    class Shape_t {
+    private:
+        XsLib* xs_lib;
         v3f origin = 0;
-        //string set_value[5];
-        int s_vert = 0;
-        int xs_vert = 0;
-        int gl_vert = 0;
-        int s_texture = 0;
-        int s_solid = 0;
-        int s_coll = 0;
         bool lock_coll_to_shape = false;
         bool show_coll = false;
         float s_point = 1;
         float w_line = 1;
-        bool advanced = false;
         bool use_shader = false;
-        Array_t arr;
+        XsEnum f_XsEnum(int v) { return v == 0 ? XS_VERTEX : v == 1 ? XS_VERTEX_AND_TEXTURE : v == 2 ? XS_VERTEX_AND_NORMAL : XS_ALL; };
+        GLenum f_GLenum(int v) { return v == 0 ? GL_POINTS : v == 1 ? GL_LINES : v == 2 ? GL_TRIANGLES : v == 3 ? GL_QUADS : GL_POLYGON; };
+        XsSolidType f_SolidType(int v) {
+            switch (v) {
+            case 0: return XS_CUBE; break;
+            case 1: return XS_PRISM; break;
+            case 2: return XS_SPHERE; break;
+            case 3: return XS_CYLINDER; break;
+            case 4: return XS_CONE; break;
+            case 5: return XS_ICOSPHERE; break;
+            case 6: return XS_TORUS; break;
+            case 7: return XS_TEAPOT; break;
+            case 8: return XS_STAR; break;
+            case 9: return XS_MONKE; break;
+            };
+        };
+    public:
+        bool advanced = false;
+        int _selected_vert = 0;
+        int _selected_tex = 0;
+        int _selected_solid = 0;
+        int _selected_coll = 0;
+        int _xs_vert = 0;
+        int _gl_vert = 0;
+        XsShape* _shape;
+        Array_t Array;
+        Shape_t() {};
+        Shape_t(XsLib& engine) { xs_lib = &engine; };
+        XsShape& Shape() { return *_shape; };
+        XsVertices& Vertices() { if (_selected_vert > 1) return *xs_lib->vertices[_selected_vert].vr; };
+        XsTextureSTB& Texture() { if (_selected_tex != 0) return *xs_lib->textures[_selected_tex].tx; };
+        XsColl& Coll() { if (_selected_coll != 0) return xs_lib->colls[_selected_coll].cl; };
+        XsEnum XsMode() { return f_XsEnum(_xs_vert); };
+        GLenum GLmode() { return f_GLenum(_gl_vert); };
+        XsSolidType SolidType() { return f_SolidType(_selected_solid); };
+        bool& isLockColl() { return lock_coll_to_shape; };
+        bool& isShowColl() { return show_coll; };
+        bool& useShader() { return use_shader; };
+        float& pointScale() { return s_point; };
+        float& lineWidth() { return w_line; };
         std::string name;
     };
     struct Shader_t {
+        Shader_t() {};
         XsShader sd;
         std::string file_name_vs;
         std::string file_name_fs;
         std::string name;
     };
     struct Coll_t {
+        Coll_t() {};
         XsColl cl;
         bool view = true;
         std::string name;
     };
     struct Effect_t {
+        Effect_t() {};
         XsEffect ef;
         int type = 0;
         std::string name;
     };
     struct Shape2d_t {
+        Shape2d_t() {};
         XsShape2d sh;
         std::string name;
     };
     struct Select_t {
+        Select_t() {};
         std::string type = "none";
         int num = 0;
     };
     struct Dir_t {
+        Dir_t() {};
         Dir_t(std::string p, bool d) {
             path = p;
             is_directory = d;
@@ -289,6 +327,7 @@ private:
     void xsui();
     void setThem(int v);
 
+    bool CameraSett = false;
     short int them = 1; // 0 = dark, 1 = light
     XsSaver* file;
     const char* WindowName = "";
@@ -301,21 +340,19 @@ public:
     std::vector<Shape_t>& Shapes() { return shapes; };
     std::vector<Vertices_t>& Vertices() { return vertices; };
     std::vector<Texture_t>& Texture() { return textures; };
-    XsShape* getXsShape(const char* const name) {
-        for (const auto& i : shapes)
+    XsShape& getXsShape(const char* const name) {
+        for (auto& i : shapes)
             if (i.name == name)
-                return i.sh;
+                return i.Shape();
         Log >> "Failed \"getXsShape()\" function.";
         std::cerr << "Cannot find this Shape.\n";
-        return nullptr;
     };
-    Shape_t getShape(const char* const name) {
-        for (const auto& i : shapes)
+    Shape_t& getShape(const char* const name) {
+        for (auto& i : shapes)
             if (i.name == name)
                 return i;
         Log >> "Failed \"getShape()\" function.";
         std::cerr << "Cannot find this Shape.\n";
-        return Shape_t();
     };
     Log_t Log;
     XsLib() {};
@@ -394,6 +431,7 @@ public:
     void operator<<(XsShape& v);
     void operator<<(XsVertices& v);
     void operator<<(XsTextureSTB& v);
+    void Create(const char* window_name);
     void Start();
 };
 #include "XsEngineInit.hpp"
