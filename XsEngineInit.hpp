@@ -1,7 +1,7 @@
 void XsLib::operator<<(XsShape& v) {
-    Shape_t _t;
+    Shape_t _t(*this);
     _t.name = std::string("Shape ") + str(leftshapenum);
-    _t.sh = &v;
+    _t._shape = &v;
     shapes.push_back(_t);
     shape_name.push_back(_strdup(_t.name.c_str()));
     leftshapenum++;
@@ -85,6 +85,60 @@ void XsLib::load(const char* file_name) {
     camera.far_ = file->getf("cam_far");
     camera.fov = file->getf("cam_fov");
     loaded_file = file_name;
+};
+void XsLib::Create(const char* window_name) {
+    srand(time(NULL));
+    sf::ContextSettings csett;
+    csett.depthBits = 24;
+    csett.stencilBits = 8;
+    csett.antialiasingLevel = 0;
+    csett.majorVersion = 3;
+    csett.minorVersion = 3;
+    csett.sRgbCapable = false;
+    WindowName = window_name;
+    window.create(sf::VideoMode(1200, 700), WindowName, sf::Style::Default, csett);
+    Log << "Create window.";
+    ImGui::SFML::Init(window);
+    ImGui::GetIO().Fonts->Clear();
+    ImGui::GetIO().Fonts->AddFontFromFileTTF("media/font.ttf", 18.f);
+    ImGui::SFML::UpdateFontTexture();
+    glewInit();
+    glEnable(GL_SCISSOR_TEST);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
+    glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+    glBlendEquation(GL_FUNC_ADD);
+    glDepthFunc(GL_LESS);
+
+    camera.fov = 45.0f;
+    camera.far_ = 100;
+    camera.viewport = vex2f(1200, 750);
+    camera.near_ = 0.2;
+    camera.pos = vex3f(-20, 20, 0);
+
+    floor_shader = XsShader(floor_shader_vs, floor_shader_fs);
+    setThem(0);
+    t_nthm = &ImGui::GetStyle();
+    _thm = ImGui::GetStyle();
+
+    path = std::filesystem::current_path().string();
+    for (const auto& i : std::filesystem::directory_iterator(path))
+        dir_iterator.push_back(Dir_t(i.path().string(), i.is_directory()));
+
+    textfile_icon.loadFromFile("media/textfile.png");
+    folder_icon.loadFromFile("media/folder.png");
+    imagefile_icon.loadFromFile("media/imagefile.png");
+    updir_icon.loadFromFile("media/updir.png");
+    model_icon.loadFromFile("media/3dmodel.png");
+
+    nw_st.name = "Shape 0";
+    nw_vt.name = "Vertices 0";
+    nw_tt.name = "Texture 0";
+    nw_ct.name = "Coll 1";
+    nw_et.name = "Effect 0";
+    ImGuiFileDialog::Instance()->SetExtentionInfos(".xs.model", ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.9), "XS");
 };
 void XsLib::setThem(int v) {
     if (v == 0 and them != v) {
