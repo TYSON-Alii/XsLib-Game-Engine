@@ -49,98 +49,98 @@ void XsLib::Start() {
             };
 
         for (auto& i : shapes) {
-            if (i.s_coll > 0) {
-                if (i.lock_coll_to_shape) {
-                    XsColl _t = colls[i.s_coll - 1].cl;
-                    _t.pos = i.sh->pos + colls[i.s_coll - 1].cl.pos;
-                    if (i.show_coll)
+            if (i._selected_coll > 0) {
+                if (i.isLockColl()) {
+                    XsColl _t = colls[i._selected_coll - 1].cl;
+                    _t.pos = i.Shape().pos + colls[i._selected_coll - 1].cl.pos;
+                    if (i.isShowColl())
                         XsDrawColl(_t, 0.1);
                 }
                 else
-                    if (i.show_coll)
-                        XsDrawColl(colls[i.s_coll - 1].cl, 0.1);
+                    if (i.isShowColl())
+                        XsDrawColl(colls[i._selected_coll - 1].cl, 0.1);
             };
-            if (i.s_vert > 1) {
+            if (i._selected_vert > 1) {
                 glLoadIdentity();
-                if (i.gl_vert == 0 and shapes[selected_r.num].s_vert > 1)
-                    glPointSize(i.s_point);
-                elif(i.gl_vert == 1 and shapes[selected_r.num].s_vert > 1)
-                    glLineWidth(i.w_line);
-                if (i.arr.use == false) {
-                    if (i.s_texture > 0) {
-                        i.sh->draw(*vertices[i.s_vert - 2].vr, *textures[i.s_texture - 1].tx, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
+                if (i._gl_vert == 0 and shapes[selected_r.num]._selected_vert > 1)
+                    glPointSize(i.pointScale());
+                elif(i._gl_vert == 1 and shapes[selected_r.num]._selected_vert > 1)
+                    glLineWidth(i.lineWidth());
+                if (i.Array.use == false) {
+                    if (i._selected_tex > 0) {
+                        i.Shape().draw(*vertices[i._selected_vert - 2].vr, *textures[i._selected_tex - 1].tx, f_XsEnum(i._xs_vert), f_GLenum(i._gl_vert));
                         glBindTexture(GL_TEXTURE_2D, 0);
                     }
                     else
-                        i.sh->draw(*vertices[i.s_vert - 2].vr, f_XsEnum(i.xs_vert), f_GLenum(i.gl_vert));
+                        i.Shape().draw(*vertices[i._selected_vert - 2].vr, f_XsEnum(i._xs_vert), f_GLenum(i._gl_vert));
                 }
                 else {
-                    if (i.s_texture > 0) {
-                        textures[i.s_texture - 1].tx->bind();
-                        const XsEnum _xs = f_XsEnum(i.xs_vert);
-                        const GLenum _gl = f_GLenum(i.gl_vert);
-                        const XsShape _ts = *i.sh;
-                        for (volatile size_t j = 0; j < i.arr.limit; j++) {
-                            i.sh->pos += i.arr.pos.x;
-                            i.sh->rot += i.arr.rot.x;
-                            i.sh->scale += i.arr.scale.x;
+                    if (i._selected_tex > 0) {
+                        textures[i._selected_tex - 1].tx->bind();
+                        const XsEnum _xs = f_XsEnum(i._xs_vert);
+                        const GLenum _gl = f_GLenum(i._gl_vert);
+                        const XsShape _ts = i.Shape();
+                        for (volatile size_t j = 0; j < i.Array.limit; j++) {
+                            i.Shape().pos += i.Array.pos.x;
+                            i.Shape().rot += i.Array.rot.x;
+                            i.Shape().scale += i.Array.scale.x;
                             glLoadIdentity();
-                            i.sh->draw(*vertices[i.s_vert - 2].vr, _xs, _gl);
+                            i.Shape().draw(*vertices[i._selected_vert - 2].vr, _xs, _gl);
                         }
-                        *i.sh = _ts;
+                        i.Shape() = _ts;
                         glBindTexture(GL_TEXTURE_2D, 0);
                     }
                     else {
-                        const XsEnum _xs = f_XsEnum(i.xs_vert);
-                        const GLenum _gl = f_GLenum(i.gl_vert);
-                        const XsShape _ts = *i.sh;
-                        for (volatile size_t j = 0; j < i.arr.limit; j++) {
-                            i.sh->pos += i.arr.pos.x;
-                            i.sh->rot += i.arr.rot.x;
-                            i.sh->scale += i.arr.scale.x;
+                        const XsEnum _xs = f_XsEnum(i._xs_vert);
+                        const GLenum _gl = f_GLenum(i._gl_vert);
+                        const XsShape _ts = i.Shape();
+                        for (volatile size_t j = 0; j < i.Array.limit; j++) {
+                            i.Shape().pos += i.Array.pos.x;
+                            i.Shape().rot += i.Array.rot.x;
+                            i.Shape().scale += i.Array.scale.x;
                             glLoadIdentity();
-                            i.sh->draw(*vertices[i.s_vert - 2].vr, _xs, _gl);
+                            i.Shape().draw(*vertices[i._selected_vert - 2].vr, _xs, _gl);
                         }
-                        *i.sh = _ts;
+                        i.Shape() = _ts;
                     }
                 }
             }
-            elif(i.s_vert == 1) {
+            elif(i._selected_vert == 1) {
                 glLoadIdentity();
-                if (i.arr.use == false)
-                    if (i.s_texture > 0) {
-                        textures[i.s_texture - 1].tx->bind();
-                        i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                if (i.Array.use == false)
+                    if (i._selected_tex > 0) {
+                        textures[i._selected_tex - 1].tx->bind();
+                        i.Shape().draw(f_SolidType(i._selected_solid), f_XsEnum(i._xs_vert));
                         glBindTexture(GL_TEXTURE_2D, 0);
                     }
                     else
-                        i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                        i.Shape().draw(f_SolidType(i._selected_solid), f_XsEnum(i._xs_vert));
                 else {
-                    if (i.s_texture > 0) {
-                        textures[i.s_texture - 1].tx->bind();
-                        const XsEnum _xs = f_XsEnum(i.xs_vert);
-                        const XsShape _ts = *i.sh;
-                        for (volatile size_t j = 0; j < i.arr.limit; j++) {
-                            i.sh->pos += i.arr.pos.x;
-                            i.sh->rot += i.arr.rot.x;
-                            i.sh->scale += i.arr.scale.x;
+                    if (i._selected_tex > 0) {
+                        textures[i._selected_tex - 1].tx->bind();
+                        const XsEnum _xs = f_XsEnum(i._xs_vert);
+                        const XsShape _ts = i.Shape();
+                        for (volatile size_t j = 0; j < i.Array.limit; j++) {
+                            i.Shape().pos += i.Array.pos.x;
+                            i.Shape().rot += i.Array.rot.x;
+                            i.Shape().scale += i.Array.scale.x;
                             glLoadIdentity();
-                            i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                            i.Shape().draw(f_SolidType(i._selected_solid), f_XsEnum(i._xs_vert));
                         }
-                        *i.sh = _ts;
+                        i.Shape() = _ts;
                         glBindTexture(GL_TEXTURE_2D, 0);
                     }
                     else {
-                        const XsEnum _xs = f_XsEnum(i.xs_vert);
-                        const XsShape _ts = *i.sh;
-                        for (volatile size_t j = 0; j < i.arr.limit; j++) {
-                            i.sh->pos += i.arr.pos.x;
-                            i.sh->rot += i.arr.rot.x;
-                            i.sh->scale += i.arr.scale.x;
+                        const XsEnum _xs = f_XsEnum(i._xs_vert);
+                        const XsShape _ts = i.Shape();
+                        for (volatile size_t j = 0; j < i.Array.limit; j++) {
+                            i.Shape().pos += i.Array.pos.x;
+                            i.Shape().rot += i.Array.rot.x;
+                            i.Shape().scale += i.Array.scale.x;
                             glLoadIdentity();
-                            i.sh->draw(f_SolidType(i.s_solid), f_XsEnum(i.xs_vert));
+                            i.Shape().draw(f_SolidType(i._selected_solid), f_XsEnum(i._xs_vert));
                         }
-                        *i.sh = _ts;
+                        i.Shape() = _ts;
                     };
                 }
             }
