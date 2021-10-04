@@ -41,6 +41,8 @@ void XsLib::ui() {
             r_panel = false;
         else
             r_panel = true;
+        if (ImGui::Selectable("Camera Sett", &CameraSett))
+            selected_r.type = "cam";
         if (shapes.size() > 0) {
             if (ImGui::TreeNode("Shapes")) {
                 for (size_t i = 0; i < shapes.size(); i++) {
@@ -52,37 +54,37 @@ void XsLib::ui() {
                             ImGuiFileDialog::Instance()->Close();
                             Log << "Select a 3D Shape";
                         }
-                        if (shapes[i].s_vert > 1)
-                            if (ImGui::Selectable(std::string(std::string((selected.num == shapes[i].s_vert - 2 and selected.type == "vert") ? "+ " : "- ") + vertices[shapes[i].s_vert - 2].name).c_str())) {
-                                if (selected.type == "vert" and selected.num == shapes[i].s_vert - 2) {
+                        if (shapes[i]._selected_vert > 1)
+                            if (ImGui::Selectable(std::string(std::string((selected.num == shapes[i]._selected_vert - 2 and selected.type == "vert") ? "+ " : "- ") + vertices[shapes[i]._selected_vert - 2].name).c_str())) {
+                                if (selected.type == "vert" and selected.num == shapes[i]._selected_vert - 2) {
                                     selected.type = "none";
                                     selected.num = 0;
                                 }
                                 else {
                                     selected.type = "vert";
-                                    selected.num = shapes[i].s_vert - 2;
+                                    selected.num = shapes[i]._selected_vert - 2;
                                 }
                             };
-                        if (shapes[i].s_texture > 0)
-                            if (ImGui::Selectable(std::string(std::string((selected.num == shapes[i].s_texture - 1 and selected.type == "tex") ? "+ " : "- ") + textures[shapes[i].s_texture - 1].name).c_str())) {
-                                if (selected.type == "tex" and selected.num == shapes[i].s_texture - 1) {
+                        if (shapes[i]._selected_tex > 0)
+                            if (ImGui::Selectable(std::string(std::string((selected.num == shapes[i]._selected_tex - 1 and selected.type == "tex") ? "+ " : "- ") + textures[shapes[i]._selected_tex - 1].name).c_str())) {
+                                if (selected.type == "tex" and selected.num == shapes[i]._selected_tex - 1) {
                                     selected.type = "none";
                                     selected.num = 0;
                                 }
                                 else {
                                     selected.type = "tex";
-                                    selected.num = shapes[i].s_texture - 1;
+                                    selected.num = shapes[i]._selected_tex - 1;
                                 }
                             };
-                        if (shapes[i].s_coll > 0)
-                            if (ImGui::Selectable(std::string(std::string((selected.num == shapes[i].s_coll - 1 and selected.type == "coll") ? "+ " : "- ") + colls[shapes[i].s_coll - 1].name).c_str())) {
-                                if (selected.type == "coll" and selected.num == shapes[i].s_coll - 1) {
+                        if (shapes[i]._selected_coll > 0)
+                            if (ImGui::Selectable(std::string(std::string((selected.num == shapes[i]._selected_coll - 1 and selected.type == "coll") ? "+ " : "- ") + colls[shapes[i]._selected_coll - 1].name).c_str())) {
+                                if (selected.type == "coll" and selected.num == shapes[i]._selected_coll - 1) {
                                     selected.type = "none";
                                     selected.num = 0;
                                 }
                                 else {
                                     selected.type = "coll";
-                                    selected.num = shapes[i].s_coll - 1;
+                                    selected.num = shapes[i]._selected_coll - 1;
                                 }
                             };
                         ImGui::TreePop();
@@ -232,55 +234,55 @@ void XsLib::ui() {
         ImGui::SetWindowPos({ camera.viewport.x - ImGui::GetWindowSize().x, 0 });
         ImGui::SetWindowSize({ camera.viewport.x / right_panel_size.x, camera.viewport.y });
         ImGui::InputText("Name", &shapes[selected_r.num].name);
-        XsInfo(*shapes[selected_r.num].sh);
+        XsInfo(shapes[selected_r.num].Shape());
         if (vertices.size() > 0) {
             _tsv = &vert_name[0];
-            ImGui::Combo("Vertices", &shapes[selected_r.num].s_vert, _tsv, vert_name.size());
-            if (shapes[selected_r.num].s_vert > 1) {
-                ImGui::Combo("Xs Mode", &shapes[selected_r.num].xs_vert, xs_vert_types, 4);
-                ImGui::Combo("GL Mode", &shapes[selected_r.num].gl_vert, gl_vert_types, 5);
+            ImGui::Combo("Vertices", &shapes[selected_r.num]._selected_vert, _tsv, vert_name.size());
+            if (shapes[selected_r.num]._selected_vert > 1) {
+                ImGui::Combo("Xs Mode", &shapes[selected_r.num]._xs_vert, xs_vert_types, 4);
+                ImGui::Combo("GL Mode", &shapes[selected_r.num]._gl_vert, gl_vert_types, 5);
             }
-            elif(shapes[selected_r.num].s_vert == 1) {
-                ImGui::Combo("Solid Type", &shapes[selected_r.num].s_solid, solid_types, 10);
-                ImGui::Combo("Xs Mode", &shapes[selected_r.num].xs_vert, xs_vert_types, 4);
+            elif(shapes[selected_r.num]._selected_vert == 1) {
+                ImGui::Combo("Solid Type", &shapes[selected_r.num]._selected_solid, solid_types, 10);
+                ImGui::Combo("Xs Mode", &shapes[selected_r.num]._xs_vert, xs_vert_types, 4);
             };
-            if (shapes[selected_r.num].gl_vert == 0 and shapes[selected_r.num].s_vert > 1)
-                ImGui::DragFloat("Point Size", &shapes[selected_r.num].s_point, 0.01f, 0.01f, 10);
-            elif(shapes[selected_r.num].gl_vert == 1 and shapes[selected_r.num].s_vert > 1)
-                ImGui::DragFloat("Line Width", &shapes[selected_r.num].w_line, 0.01f, 0.01f, 10);
+            if (shapes[selected_r.num]._gl_vert == 0 and shapes[selected_r.num]._selected_vert > 1)
+                ImGui::DragFloat("Point Size", &shapes[selected_r.num].pointScale(), 0.01f, 0.01f, 10);
+            elif(shapes[selected_r.num]._gl_vert == 1 and shapes[selected_r.num]._selected_vert > 1)
+                ImGui::DragFloat("Line Width", &shapes[selected_r.num].lineWidth(), 0.01f, 0.01f, 10);
         };
         if (textures.size() > 0) {
             _tsv = &tex_name[0];
-            ImGui::Combo("Texture", &shapes[selected_r.num].s_texture, _tsv, tex_name.size());
-            if (shapes[selected_r.num].s_texture > 0)
-                XsInfo(*textures[shapes[selected_r.num].s_texture - 1].tx);
+            ImGui::Combo("Texture", &shapes[selected_r.num]._selected_tex, _tsv, tex_name.size());
+            if (shapes[selected_r.num]._selected_tex > 0)
+                XsInfo(*textures[shapes[selected_r.num]._selected_tex - 1].tx);
         };
         if (ImGui::CollapsingHeader("Advanced")) {
             if (colls.size() > 0) {
                 _tsv = &coll_name[0];
-                ImGui::Combo("Collission", &shapes[selected_r.num].s_coll, _tsv, coll_name.size());
-                if (shapes[selected_r.num].s_coll > 0) {
-                    ImGui::Checkbox("Lock Shape", &shapes[selected_r.num].lock_coll_to_shape);
-                    ImGui::Checkbox("Show", &shapes[selected_r.num].show_coll);
-                    ImGui::DragFloat3("position ", colls[shapes[selected_r.num].s_coll - 1].cl.pos, 0.01f, -FLT_MAX, FLT_MAX);
-                    ImGui::DragFloat3("scale ", colls[shapes[selected_r.num].s_coll - 1].cl.scale, 0.01f, -FLT_MAX, FLT_MAX);
+                ImGui::Combo("Collission", &shapes[selected_r.num]._selected_coll, _tsv, coll_name.size());
+                if (shapes[selected_r.num]._selected_coll > 0) {
+                    ImGui::Checkbox("Lock Shape", &shapes[selected_r.num].isLockColl());
+                    ImGui::Checkbox("Show", &shapes[selected_r.num].isShowColl());
+                    ImGui::DragFloat3("position ", colls[shapes[selected_r.num]._selected_coll - 1].cl.pos, 0.01f, -FLT_MAX, FLT_MAX);
+                    ImGui::DragFloat3("scale ", colls[shapes[selected_r.num]._selected_coll - 1].cl.scale, 0.01f, -FLT_MAX, FLT_MAX);
                     //if (ImGui::Button((shapes[selected_r.num].lock_coll_to_shape == false) ? "Lock" : "Un-Lock", { ImGui::GetWindowSize().x - 20, 0 }))
                     //    shapes[selected_r.num].lock_coll_to_shape = !shapes[selected_r.num].lock_coll_to_shape;
                     //if (ImGui::Button("Show", { ImGui::GetWindowSize().x - 20, 0 }))
                     //    shapes[selected_r.num].show_coll = !shapes[selected_r.num].show_coll;
                 };
             };
-            ImGui::Checkbox("Array", &shapes[selected_r.num].arr.use);
-            if (shapes[selected_r.num].arr.use) {
-                if (shapes[selected_r.num].s_vert > 1)
+            ImGui::Checkbox("Array", &shapes[selected_r.num].Array.use);
+            if (shapes[selected_r.num].Array.use) {
+                if (shapes[selected_r.num]._selected_vert > 1)
                     if (ImGui::Button("Export Vertices", { ImGui::GetWindowSize().x - 15, 0 })) {
                         selected.type = "export array";
-                        selected.num = shapes[selected_r.num].s_vert;
+                        selected.num = shapes[selected_r.num]._selected_vert;
                     };
-                ImGui::DragInt("Limit", &shapes[selected_r.num].arr.limit, 1, 0, INT_MAX);
-                ImGui::DragFloat3("Pos", shapes[selected_r.num].arr.pos, 0.001f, -FLT_MAX, FLT_MAX);
-                ImGui::DragFloat3("Rot", shapes[selected_r.num].arr.rot, 0.001f, -FLT_MAX, FLT_MAX);
-                ImGui::DragFloat3("Scale", shapes[selected_r.num].arr.scale, 0.001f, -FLT_MAX, FLT_MAX);
+                ImGui::DragInt("Limit", &shapes[selected_r.num].Array.limit, 1, 0, INT_MAX);
+                ImGui::DragFloat3("Pos", shapes[selected_r.num].Array.pos, 0.001f, -FLT_MAX, FLT_MAX);
+                ImGui::DragFloat3("Rot", shapes[selected_r.num].Array.rot, 0.001f, -FLT_MAX, FLT_MAX);
+                ImGui::DragFloat3("Scale", shapes[selected_r.num].Array.scale, 0.001f, -FLT_MAX, FLT_MAX);
             };
         }
         t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
@@ -299,6 +301,13 @@ void XsLib::ui() {
         *t_nthm = _thm;
         ImGui::End();
     }
+    elif(selected_r.type == "cam") {
+        ImGui::Begin("Camera", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+        ImGui::SetWindowPos({ camera.viewport.x - ImGui::GetWindowSize().x, 0 });
+        ImGui::SetWindowSize({ camera.viewport.x / right_panel_size.x, camera.viewport.y });
+        XsInfo(camera);
+        ImGui::End();
+    };
     if (selected.type == "vert") {
         ImGui::Begin(vertices[selected.num].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
         ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
@@ -320,8 +329,8 @@ void XsLib::ui() {
         ImGui::SameLine(ImGui::GetWindowSize().x - 60, -100);
         if (ImGui::Button("Delete")) {
             for (auto& i : shapes) {
-                if (i.s_vert == selected.num + 2)
-                    i.s_vert = 0;
+                if (i._selected_vert == selected.num + 2)
+                    i._selected_vert = 0;
             }
             vertices.erase(vertices.begin() + selected.num);
             vert_name.erase(vert_name.begin() + selected.num + 2);
@@ -374,8 +383,8 @@ void XsLib::ui() {
         ImGui::SameLine(ImGui::GetWindowSize().x - 60, -100);
         if (ImGui::Button("Delete")) {
             for (auto& i : shapes)
-                if (i.s_texture == selected.num + 1) {
-                    i.s_texture = 0;
+                if (i._selected_tex == selected.num + 1) {
+                    i._selected_tex = 0;
                     break;
                 };
             textures.erase(textures.begin() + selected.num);
@@ -436,8 +445,8 @@ void XsLib::ui() {
         t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.986);
         if (ImGui::Button("Delete")) {
             for (auto& i : shapes)
-                if (i.s_coll == selected.num + 1) {
-                    i.s_coll = 0;
+                if (i._selected_coll == selected.num + 1) {
+                    i._selected_coll = 0;
                     break;
                 };
             colls.erase(colls.begin() + selected.num);
@@ -529,15 +538,15 @@ void XsLib::ui() {
         ImGui::SetWindowSize({ 250, 90 });
         ImGui::InputText("Name", &export_array_name);
         if (ImGui::Button("Create")) {
-            const XsShape _sh = *shapes[selected_r.num].sh;
-            const XsEnum _xs = f_XsEnum(shapes[selected_r.num].xs_vert);
+            const XsShape _sh = shapes[selected_r.num].Shape();
+            const XsEnum _xs = f_XsEnum(shapes[selected_r.num]._xs_vert);
             Vertices_t new_vert;
-            XsVertices _tv = *vertices[shapes[selected_r.num].s_vert - 2].vr;
+            XsVertices _tv = *vertices[shapes[selected_r.num]._selected_vert - 2].vr;
             new_vert.name = export_array_name;
-            for (volatile size_t j = 0; j < shapes[selected_r.num].arr.limit; j++) {
-                XsOrigin(_tv, _xs, shapes[selected_r.num].arr.pos + _sh.pos);
+            for (volatile size_t j = 0; j < shapes[selected_r.num].Array.limit; j++) {
+                XsOrigin(_tv, _xs, shapes[selected_r.num].Array.pos + _sh.pos);
                 //XsRotate(_tv, _xs, shapes[selected_r.num].arr.rot + _sh.rot);
-                XsScale(_tv, _xs, shapes[selected_r.num].arr.scale + _sh.scale);
+                XsScale(_tv, _xs, shapes[selected_r.num].Array.scale + _sh.scale);
                 XsJoin(*new_vert.vr, _xs, _tv, _xs);
             }
             vertices.push_back(new_vert);
@@ -564,7 +573,7 @@ void XsLib::ui() {
         if (ImGui::Button("3D Shape  ", { 235, 0 })) {
             if (XsIsKeyPressed(XS_KEY_SHIFT)) {
                 Shape_t _t;
-                _t.sh = new XsShape();
+                _t.Shape() = XsShape();
                 _t.name = std::string("Shape ") + str(leftshapenum);
                 shape_name.push_back(_strdup(_t.name.c_str()));
                 shapes.push_back(_t);
@@ -619,7 +628,7 @@ void XsLib::ui() {
             if (s_ns != 0)
                 nw_st = shapes[s_ns - 1];
             else
-                nw_st.sh = new XsShape();
+                *nw_st._shape = XsShape();
             nw_st.name = temp_copy_name;
             shape_name.push_back(_strdup(nw_st.name.c_str()));
             shapes.push_back(nw_st);
