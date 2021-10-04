@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <XsEngine.hpp>
+XsLib engine;
 XsShape v;
 
 using namespace std;
@@ -11,10 +12,11 @@ void myfunc() {
 }
 
 int main() {
-    XsLib engine("oyun motoru");
-    engine.load("new_proj.xs.save");
+    engine.Create("oyun motoru");
+    // after creating engine
     XsVertices cube_vert = XsOBJLoader("data/magic.obj", XS_VERTEX);
     XsTextureSTB tex("data/pattern32.png");
+    engine.load("new_proj.xs.save");
     engine << v;
     engine << tex;
     engine << cube_vert;
