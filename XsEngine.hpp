@@ -327,10 +327,17 @@ protected:
     void xsui();
     void setThem(int v);
 
-    bool CameraSett = false;
+    bool use_skybox = false;
+    vex2f sky_rot = 0;
+    int sky_f = 0, sky_w = 0, sky_fl = 0;
+    std::string sky_img_path;
+    XsSky skybox;
+
+    bool Sett = false;
     short int them = 1; // 0 = dark, 1 = light
     XsSaver* file;
     const char* WindowName = "";
+    bool show_floor = true;
 public:
     void save(const char* file_name);
     void load(const char* file_name);
@@ -340,6 +347,7 @@ public:
     std::vector<Shape_t>& Shapes() { return shapes; };
     std::vector<Vertices_t>& Vertices() { return vertices; };
     std::vector<Texture_t>& Texture() { return textures; };
+    XsSky& Sky() { return skybox; };
     XsShape& getXsShape(const char* const name) {
         for (auto& i : shapes)
             if (i.name == name)
@@ -387,6 +395,10 @@ public:
         camera.viewport = vex2f(1200, 750);
         camera.near_ = 0.2;
         camera.pos = vex3f(-20, 20, 0);
+
+        skybox.color = 1;
+        skybox.position = camera.pos;
+        skybox.rotation = 0;
 
         floor_shader = XsShader(floor_shader_vs, floor_shader_fs);
         setThem(0);
