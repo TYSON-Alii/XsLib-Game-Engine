@@ -41,14 +41,16 @@ void XsLib::ui() {
             r_panel = false;
         else
             r_panel = true;
-        if (ImGui::Selectable("Camera Sett", &CameraSett))
-            selected_r.type = "cam";
+        if (ImGui::Selectable("Settings", &Sett))
+            selected_r.type = (selected_r.type == "sett") ? "none" : "sett";
         if (shapes.size() > 0) {
             if (ImGui::TreeNode("Shapes")) {
                 for (size_t i = 0; i < shapes.size(); i++) {
-                    i != selected_r.num ? ImGui::SetNextTreeNodeOpen(i == selected_r.num) : void();
-                    selected_r.type = "shape";
+                    (i != selected_r.num) ? ImGui::SetNextTreeNodeOpen(i == selected_r.num) : void();
+                    if (selected_r.type == "sett") ImGui::SetNextTreeNodeOpen(false);
                     if (ImGui::TreeNode(shapes[i].name.c_str()/*, (i == selected_r.num and selected_r.type == "shape") ? true : false)*/)) {
+                        selected_r.type = "shape";
+                        Sett = false;
                         if (i != selected_r.num) {
                             selected_r.num = i;
                             ImGuiFileDialog::Instance()->Close();
@@ -301,12 +303,52 @@ void XsLib::ui() {
         *t_nthm = _thm;
         ImGui::End();
     }
-    elif(selected_r.type == "cam") {
-        ImGui::Begin("Camera", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+    elif(selected_r.type == "sett") {
+        ImGui::Begin("Settings", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
         ImGui::SetWindowPos({ camera.viewport.x - ImGui::GetWindowSize().x, 0 });
         ImGui::SetWindowSize({ camera.viewport.x / right_panel_size.x, camera.viewport.y });
-        XsInfo(camera);
+        ImGui::DragFloat3("Cam Position", camera.pos, 0.01f, -FLT_MAX, FLT_MAX);
+        ImGui::DragFloat2("Cam Rotation", cam_rot, 0.1f, -FLT_MAX, FLT_MAX);
+        ImGui::DragFloat("Cam Far Panel", &camera.far_, 0.01f, -FLT_MAX, FLT_MAX);
+        ImGui::Checkbox("Show Floor", &show_floor);
+        ImGui::ColorPicker3("Background Color", them == 0 ? bgColorDark : bgColorLight);
+        if (ImGui::Button("Reset Background Color", { ImGui::GetWindowSize().x - 15, 0 }))
+            if (them == 0)
+                bgColorDark = v3f(0.05f, 0.05f, 0.075f);
+            else
+                bgColorLight = v3f(0.85f, 0.85f, 0.875f);
+        ImGui::Checkbox("Use Skybox", &use_skybox);
+        if (use_skybox) {
+            if (skybox.texture.isLoad())
+                XsInfo(skybox.texture);
+            skybox.color = them == 0 ? bgColorDark : bgColorLight;
+            ImGui::DragFloat2("Sky Rot", sky_rot, 0.1f, -FLT_MAX, FLT_MAX);
+            skybox.rotation.x = cos(glm::radians(sky_rot.x)) * cos(glm::radians(sky_rot.y));
+            skybox.rotation.y = -sin(glm::radians(sky_rot.y));
+            skybox.rotation.z = sin(glm::radians(sky_rot.x)) * cos(glm::radians(sky_rot.y));
+            ImGui::InputText("Image Path", &sky_img_path);
+            ImGui::Combo("Filter", &sky_fl, p_filter_types, 2);
+            ImGui::Combo("Wrapping", &sky_w, p_wrap_types, 4);
+            ImGui::Combo("Format", &sky_f, p_format_types, 3);
+            if (ImGui::Button("Load"))
+                if (sky_img_path != "")
+                    skybox.texture = XsTextureSTB(sky_img_path.c_str(), sky_f == 0 ? GL_RGB : sky_f == 1 ? GL_RGBA : GL_SRGB, sky_fl == 0 ? GL_NEAREST : GL_LINEAR, sky_w == 0 ? GL_REPEAT : sky_w == 1 ? GL_MIRRORED_REPEAT : sky_w == 2 ? GL_CLAMP_TO_EDGE : GL_CLAMP_TO_BORDER);
+            ImGui::SameLine(50, -50);
+            if (ImGui::ImageButton(folder_icon, { 20, 18 }))
+                ImGuiFileDialog::Instance()->OpenDialog("SkyImg", "Choose File", ".png", ".");
+        };
         ImGui::End();
+
+        if (ImGuiFileDialog::Instance()->Display("SkyImg"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                sky_img_path = ImGuiFileDialog::Instance()->GetFilePathName();
+            }
+            ImGuiFileDialog::Instance()->Close();
+            if (XsIsKeyPressed(XS_KEY_ESC))
+                ImGuiFileDialog::Instance()->Close();
+        }
     };
     if (selected.type == "vert") {
         ImGui::Begin(vertices[selected.num].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
@@ -628,7 +670,7 @@ void XsLib::ui() {
             if (s_ns != 0)
                 nw_st = shapes[s_ns - 1];
             else
-                *nw_st._shape = XsShape();
+                nw_st._shape = new XsShape();
             nw_st.name = temp_copy_name;
             shape_name.push_back(_strdup(nw_st.name.c_str()));
             shapes.push_back(nw_st);
