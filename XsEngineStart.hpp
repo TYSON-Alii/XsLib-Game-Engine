@@ -2,22 +2,22 @@ void XsLib::Start() {
     while (window.isOpen()) {
         s_fps = std::chrono::high_resolution_clock::now();
         if (!game_mode)
-        for (auto& i : pushs)
-            if (i.code == "before clear") {
-                i.push_data();
-                break;
-            };
+            for (auto& i : pushs)
+                if (i.code == "before clear") {
+                    i.push_data();
+                    break;
+                };
         if (them == 0)
             glClearColor(bgColorDark.x, bgColorDark.y, bgColorDark.z, 0.f);
         else if (them == 1)
             glClearColor(bgColorLight.x, bgColorLight.y, bgColorLight.z, 0.f);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         if (!game_mode)
-        for (auto& i : pushs)
-            if (i.code == "after clear" or i.code == "before process") {
-                i.push_data();
-                break;
-            };
+            for (auto& i : pushs)
+                if (i.code == "after clear" or i.code == "before process") {
+                    i.push_data();
+                    break;
+                };
         ImGui::SFML::ProcessEvent(event);
         window.pollEvent(event);
         if (event.type == sf::Event::Closed) {
@@ -32,13 +32,19 @@ void XsLib::Start() {
         };
         mouse_pos = XsGetMousePos();
         if (!game_mode)
-        for (auto& i : pushs)
-            if (i.code == "after process" or i.code == "before camera") {
-                i.push_data();
-                break;
-            };
+            for (auto& i : pushs)
+                if (i.code == "after process" or i.code == "before camera") {
+                    i.push_data();
+                    break;
+                };
         camera_sett();
-        if (game_mode)
+        if (use_skybox) {
+            skybox.color.w = 1;
+            skybox.position = camera.pos;
+            skybox.draw(XS_SPHERE);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        };
+        if (game_mode and show_floor)
             drawfloor(floor_shader);
 
         if (!game_mode)
