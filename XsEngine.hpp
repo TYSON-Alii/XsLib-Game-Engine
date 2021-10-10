@@ -339,11 +339,11 @@ protected:
     const char* WindowName = "";
     bool show_floor = true;
 public:
-    void save(const char* file_name);
-    void load(const char* file_name);
-    XsCamera camera;
-    sf::RenderWindow window;
-    sf::Event event;
+    void Save(const char* file_name);
+    void Load(const char* file_name);
+    XsCamera Camera;
+    sf::RenderWindow Window;
+    sf::Event Event;
     std::vector<Shape_t>& Shapes() { return shapes; };
     std::vector<Vertices_t>& Vertices() { return vertices; };
     std::vector<Texture_t>& Texture() { return textures; };
@@ -374,9 +374,9 @@ public:
         csett.minorVersion = 3;
         csett.sRgbCapable = false;
         WindowName = window_name;
-        window.create(sf::VideoMode(1200, 700), WindowName, sf::Style::Default, csett);
+        Window.create(sf::VideoMode(1200, 700), WindowName, sf::Style::Default, csett);
         Log << "Create window.";
-        ImGui::SFML::Init(window);
+        ImGui::SFML::Init(Window);
         ImGui::GetIO().Fonts->Clear();
         ImGui::GetIO().Fonts->AddFontFromFileTTF("media/font.ttf", 18.f);
         ImGui::SFML::UpdateFontTexture();
@@ -390,14 +390,14 @@ public:
         glBlendEquation(GL_FUNC_ADD);
         glDepthFunc(GL_LESS);
 
-        camera.fov = 45.0f;
-        camera.far_ = 100;
-        camera.viewport = vex2f(1200, 750);
-        camera.near_ = 0.2;
-        camera.pos = vex3f(-20, 20, 0);
+        Camera.fov = 45.0f;
+        Camera.far_ = 100;
+        Camera.viewport = vex2f(1200, 750);
+        Camera.near_ = 0.2;
+        Camera.pos = vex3f(-20, 20, 0);
 
         skybox.color = 1;
-        skybox.position = camera.pos;
+        skybox.position = Camera.pos;
         skybox.rotation = 0;
 
         floor_shader = XsShader(floor_shader_vs, floor_shader_fs);
