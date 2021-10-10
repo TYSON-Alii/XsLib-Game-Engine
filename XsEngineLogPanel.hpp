@@ -2,8 +2,8 @@ void XsLib::logpanel() {
     bool item_hovered = false;
     std::string item_path;
     ImGui::Begin("Logdsf", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
-    ImGui::SetWindowPos({ camera.viewport.x / left_panel_size.x, camera.viewport.y - (ImGui::GetWindowSize().y) });
-    ImGui::SetWindowSize({ r_panel ? (camera.viewport.x - camera.viewport.x / left_panel_size.x - camera.viewport.x / right_panel_size.x) : (camera.viewport.x - camera.viewport.x / left_panel_size.x), (ImGui::GetWindowSize().y > camera.viewport.y / 1.01) ? float(camera.viewport.y / 1.01) : float(ImGui::GetWindowSize().y) });
+    ImGui::SetWindowPos({ Camera.viewport.x / left_panel_size.x, Camera.viewport.y - (ImGui::GetWindowSize().y) });
+    ImGui::SetWindowSize({ r_panel ? (Camera.viewport.x - Camera.viewport.x / left_panel_size.x - Camera.viewport.x / right_panel_size.x) : (Camera.viewport.x - Camera.viewport.x / left_panel_size.x), (ImGui::GetWindowSize().y > Camera.viewport.y / 1.01) ? float(Camera.viewport.y / 1.01) : float(ImGui::GetWindowSize().y) });
     log_y = ImGui::GetWindowSize().y;
     ImGui::BeginMenuBar();
     if (ImGui::MenuItem("Log"))
@@ -107,7 +107,7 @@ void XsLib::logpanel() {
             vex2f _t = vex2f(preview_tex.getSize().x, preview_tex.getSize().y);
             _t.normalize();
             ImGui::SetWindowSize({ 350.f, 350.f * _t.y + 50 });
-            ImGui::SetWindowPos({ r_panel ? (camera.viewport.x - ImGui::GetWindowSize().x - (camera.viewport.x / right_panel_size.x)) : (camera.viewport.x - ImGui::GetWindowSize().x), camera.viewport.y - ImGui::GetWindowSize().y - log_y });
+            ImGui::SetWindowPos({ r_panel ? (Camera.viewport.x - ImGui::GetWindowSize().x - (Camera.viewport.x / right_panel_size.x)) : (Camera.viewport.x - ImGui::GetWindowSize().x), Camera.viewport.y - ImGui::GetWindowSize().y - log_y });
             ImGui::Image(preview_tex, sf::Vector2f(ImGui::GetWindowSize().x, (ImGui::GetWindowSize().x) * _t.y));
             ImGui::End();
         };
@@ -122,7 +122,7 @@ void XsLib::logpanel() {
     };
 
     if (!XsIsKeyPressed(XS_MOUSE_LEFT)) {
-        if (ImGui::GetIO().MousePos.x > camera.viewport.x / left_panel_size.x and ImGui::GetIO().MousePos.y < camera.viewport.y - log_y and (ImGui::GetIO().MousePos.y < (r_panel ? (camera.viewport.x - (camera.viewport.x / right_panel_size.x)) : (camera.viewport.x))))
+        if (ImGui::GetIO().MousePos.x > Camera.viewport.x / left_panel_size.x and ImGui::GetIO().MousePos.y < Camera.viewport.y - log_y and (ImGui::GetIO().MousePos.y < (r_panel ? (Camera.viewport.x - (Camera.viewport.x / right_panel_size.x)) : (Camera.viewport.x))))
             if (drop_path != "") {
                 if (drop_path.ends_with(".png")) {
                     Texture_t _t;
