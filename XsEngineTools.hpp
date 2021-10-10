@@ -1,6 +1,6 @@
 void XsLib::tools() {
     ImGui::Begin("dsafbdjagvfa", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
-    ImGui::SetWindowPos({ camera.viewport.x - (r_panel ? (camera.viewport.x / 5.f) : 0.f) - 55, -5 });
+    ImGui::SetWindowPos({ Camera.viewport.x - (r_panel ? (Camera.viewport.x / 5.f) : 0.f) - 55, -5 });
     ImGui::SetWindowSize({ 100, 100 });
     if (ImGui::Button("Tools")) {
         if (selected.type == "tools")
@@ -13,10 +13,10 @@ void XsLib::tools() {
     bool _sthem = false;
     if (selected.type == "tools") {
         ImGui::Begin("Tools ", (bool*)0, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        if (ImGui::GetWindowPos().x < camera.viewport.x / left_panel_size.x)
-            ImGui::SetWindowPos({ camera.viewport.x / left_panel_size.x + 1, ImGui::GetWindowPos().y });
-        elif(ImGui::GetWindowPos().x > camera.viewport.x - camera.viewport.x / right_panel_size.x)
-            ImGui::SetWindowPos({ camera.viewport.x - camera.viewport.x / right_panel_size.x, ImGui::GetWindowPos().y });
+        if (ImGui::GetWindowPos().x < Camera.viewport.x / left_panel_size.x)
+            ImGui::SetWindowPos({ Camera.viewport.x / left_panel_size.x + 1, ImGui::GetWindowPos().y });
+        elif(ImGui::GetWindowPos().x > Camera.viewport.x - Camera.viewport.x / right_panel_size.x)
+            ImGui::SetWindowPos({ Camera.viewport.x - Camera.viewport.x / right_panel_size.x, ImGui::GetWindowPos().y });
         ImGui::SetWindowSize({ 250, 300 });
         if (ImGui::Button("Calculator", { 230, 0 })) {
             selected.type = "calculator";
@@ -38,7 +38,7 @@ void XsLib::tools() {
     };
     if (selected.type == "notepad") {
         ImGui::Begin("Notepad  ", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         ImGui::SetWindowSize({ 300, 200 });
         ImGui::InputTextMultiline("Notepad  ", &_notepad);
         ImGui::End();
