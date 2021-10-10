@@ -46,7 +46,7 @@ void XsLib::operator<<(XsTextureSTB& v) {
         XsLog(XsLogRed, XsLogWhite, "Wrong Shape Type..\n");
 };
 */
-void XsLib::save(const char* file_name) {
+void XsLib::Save(const char* file_name) {
     file = new XsSaver(file_name);
     file->clear();
     file->add(WindowName, "window_name");
@@ -55,18 +55,15 @@ void XsLib::save(const char* file_name) {
     file->add(them, "them");
     file->add(input_text, "input_text");
     file->add(vert_load_format, "vert_load_format");
-    file->add(selected_r.type, "selected_r_type");
-    file->add(selected_r.num, "selected_r_num");
-    file->add(selected.type, "selected_type");
-    file->add(selected.num, "selected_num");
-    file->add(camera.pos, "cam_pos");
-    file->add(camera.rot, "cam_rot");
-    file->add(camera.viewport, "cam_viewp");
-    file->add(camera.near_, "cam_near");
-    file->add(camera.far_, "cam_far");
-    file->add(camera.fov, "cam_fov");
+    file->add(Camera.pos, "cam_pos");
+    file->add(Camera.rot, "cam_rot");
+    file->add(Camera.viewport, "cam_viewp");
+    file->add(Camera.near_, "cam_near");
+    file->add(Camera.far_, "cam_far");
+    file->add(Camera.fov, "cam_fov");
+    loaded_file = file_name;
 };
-void XsLib::load(const char* file_name) {
+void XsLib::Load(const char* file_name) {
     file = new XsSaver(file_name);
     WindowName = file->getcstr("window_name");
     cam_rot = file->getv2f("cam_rot");
@@ -74,16 +71,12 @@ void XsLib::load(const char* file_name) {
     them = file->geti("them");
     input_text = file->getstr("input_text");
     vert_load_format = file->geti("vert_load_format");
-    selected_r.type = file->getstr("selected_r_type");
-    selected_r.num = file->geti("selected_r_num");
-    selected.type = file->getstr("selected_type");
-    selected.num = file->geti("selected_num");
-    camera.pos = file->getv3f("cam_pos");
-    camera.rot = file->getv3f("cam_rot");
-    camera.viewport = file->getv2f("cam_viewp");
-    camera.near_ = file->getf("cam_near");
-    camera.far_ = file->getf("cam_far");
-    camera.fov = file->getf("cam_fov");
+    Camera.pos = file->getv3f("cam_pos");
+    Camera.rot = file->getv3f("cam_rot");
+    Camera.viewport = file->getv2f("cam_viewp");
+    Camera.near_ = file->getf("cam_near");
+    Camera.far_ = file->getf("cam_far");
+    Camera.fov = file->getf("cam_fov");
     loaded_file = file_name;
 };
 void XsLib::Create(const char* window_name) {
@@ -96,9 +89,9 @@ void XsLib::Create(const char* window_name) {
     csett.minorVersion = 3;
     csett.sRgbCapable = false;
     WindowName = window_name;
-    window.create(sf::VideoMode(1200, 700), WindowName, sf::Style::Default, csett);
+    Window.create(sf::VideoMode(1200, 700), WindowName, sf::Style::Default, csett);
     Log << "Create window.";
-    ImGui::SFML::Init(window);
+    ImGui::SFML::Init(Window);
     ImGui::GetIO().Fonts->Clear();
     ImGui::GetIO().Fonts->AddFontFromFileTTF("media/font.ttf", 18.f);
     ImGui::SFML::UpdateFontTexture();
@@ -112,11 +105,11 @@ void XsLib::Create(const char* window_name) {
     glBlendEquation(GL_FUNC_ADD);
     glDepthFunc(GL_LESS);
 
-    camera.fov = 45.0f;
-    camera.far_ = 100;
-    camera.viewport = vex2f(1200, 750);
-    camera.near_ = 0.2;
-    camera.pos = vex3f(-20, 20, 0);
+    Camera.fov = 45.0f;
+    Camera.far_ = 100;
+    Camera.viewport = vex2f(1200, 750);
+    Camera.near_ = 0.2;
+    Camera.pos = vex3f(-20, 20, 0);
 
     floor_shader = XsShader(floor_shader_vs, floor_shader_fs);
     setThem(0);
@@ -253,11 +246,11 @@ void XsLib::xsui() {
     //    p_sett.end();
 }
 void XsLib::camera_sett() {
-    camera.viewport = vex2f(window.getSize().x, window.getSize().y);
+    Camera.viewport = vex2f(Window.getSize().x, Window.getSize().y);
     if (game_mode) {
         if (XsIsKeyPressed(XS_MOUSE_RIGHT)) {
-            if (event.type == sf::Event::MouseWheelMoved) {
-                speed_x += (float)event.mouseWheel.delta * 10;
+            if (Event.type == sf::Event::MouseWheelMoved) {
+                speed_x += (float)Event.mouseWheel.delta * 10;
                 if (speed_x < 20)
                     speed_x = 20;
                 show_cam_speed = true;
@@ -268,9 +261,9 @@ void XsLib::camera_sett() {
                     show_cam_speed = false;
             };
             if (XsIsKeyPressed(XS_KEY_W) && !XsIsKeyPressed(XS_KEY_SPACE))
-                speed += camera.rot * (1.f / speed_x);
+                speed += Camera.rot * (1.f / speed_x);
             else if (XsIsKeyPressed(XS_KEY_S) && !XsIsKeyPressed(XS_KEY_SPACE))
-                speed -= camera.rot * (1.f / speed_x);
+                speed -= Camera.rot * (1.f / speed_x);
             if (mouse_press == false) {
                 last_mouse_pos = mouse_pos;
                 mouse_press = true;
@@ -292,11 +285,11 @@ void XsLib::camera_sett() {
             speed *= 0.95;
         if (XsIsKeyPressed(XS_KEY_SPACE))
             speed *= 0.75f;
-        camera.pos += speed;
+        Camera.pos += speed;
         cam_vel *= 0.88;
         cam_rot += cam_vel;
     }
-    XsFPSCamera(camera, cam_rot - vex2f(0, 300), 0.3);
+    XsFPSCamera(Camera, cam_rot - vex2f(0, 300), 0.3);
 };
 void XsLib::drawfloor(XsShader& v) {
     glDepthFunc(GL_ALWAYS);
@@ -305,46 +298,46 @@ void XsLib::drawfloor(XsShader& v) {
     glEnable(GL_POINT_SMOOTH);
     glLoadIdentity();
     v.use();
-    v("projection", camera.projectionMatrix());
-    v("view", camera.viewMatrix);
+    v("projection", Camera.projectionMatrix());
+    v("view", Camera.viewMatrix);
     if (them == 1)
         v("color", bgColorDark);
     else if (them == 0)
         v("color", bgColorLight);
-    v("cam_y", camera.pos.y);
-    if (3 > fabs(camera.pos.y))
-        glLineWidth(4.1 - fabs(camera.pos.y));
+    v("cam_y", Camera.pos.y);
+    if (3 > fabs(Camera.pos.y))
+        glLineWidth(4.1 - fabs(Camera.pos.y));
     else
         glLineWidth(1);
-    glTranslatef(ceil(camera.pos.x / 2) * 2, 0, ceil(camera.pos.z / 2) * 2);
+    glTranslatef(ceil(Camera.pos.x / 2) * 2, 0, ceil(Camera.pos.z / 2) * 2);
     glBegin(GL_LINES);
     rep(m_ldis.x * m_fdis.z, 2.f)
-        if ((ceil(camera.pos.z / 2) * 2) + m_fdis.z - i != 0)
+        if ((ceil(Camera.pos.z / 2) * 2) + m_fdis.z - i != 0)
             drawline(m_fdis.x, 0, m_fdis.z - i, -m_fdis.x, 0, m_fdis.z - i);
     glEnd();
 
     glBegin(GL_LINES);
     rep(m_ldis.z * m_fdis.x, 2.f)
-        if ((ceil(camera.pos.x / 2) * 2) + m_fdis.x - i != 0)
+        if ((ceil(Camera.pos.x / 2) * 2) + m_fdis.x - i != 0)
             drawline(m_fdis.x - i, 0, m_fdis.z, m_fdis.x - i, 0, -m_fdis.z);
     glEnd();
 
     glLoadIdentity();
-    if (4 > fabs(camera.pos.y))
-        glLineWidth(5.1 - fabs(camera.pos.y));
+    if (4 > fabs(Camera.pos.y))
+        glLineWidth(5.1 - fabs(Camera.pos.y));
     else
         glLineWidth(2);
     v("color", blue);
     glBegin(GL_LINES);
-    drawline(0, 0, m_fdis.z + camera.pos.z, 0, 0, -m_fdis.z + camera.pos.z);
+    drawline(0, 0, m_fdis.z + Camera.pos.z, 0, 0, -m_fdis.z + Camera.pos.z);
     glEnd();
     v("color", red);
     glBegin(GL_LINES);
-    drawline(m_fdis.x + camera.pos.x, 0, 0, -m_fdis.x + camera.pos.x, 0, 0);
+    drawline(m_fdis.x + Camera.pos.x, 0, 0, -m_fdis.x + Camera.pos.x, 0, 0);
     glEnd();
     v("color", green);
     glBegin(GL_LINES);
-    drawline(0, m_fdis.y + camera.pos.y, 0, 0, -m_fdis.y + camera.pos.y, 0);
+    drawline(0, m_fdis.y + Camera.pos.y, 0, 0, -m_fdis.y + Camera.pos.y, 0);
     glEnd();
 
     v.disuse();
