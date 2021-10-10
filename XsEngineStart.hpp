@@ -1,5 +1,5 @@
 void XsLib::Start() {
-    while (window.isOpen()) {
+    while (Window.isOpen()) {
         s_fps = std::chrono::high_resolution_clock::now();
         if (!game_mode)
             for (auto& i : pushs)
@@ -18,16 +18,11 @@ void XsLib::Start() {
                     i.push_data();
                     break;
                 };
-        ImGui::SFML::ProcessEvent(event);
-        window.pollEvent(event);
-        if (event.type == sf::Event::Closed) {
-            selected.type = "none";
-            selected.num = 0;
-            selected_r.type = "none";
-            selected_r.num = 0;
-            save("new_proj.xs.save");
+        ImGui::SFML::ProcessEvent(Event);
+        Window.pollEvent(Event);
+        if (Event.type == sf::Event::Closed) {
             Log << "Window closed";
-            window.close();
+            Window.close();
             break;
         };
         mouse_pos = XsGetMousePos();
@@ -40,7 +35,7 @@ void XsLib::Start() {
         camera_sett();
         if (use_skybox) {
             skybox.color.w = 1;
-            skybox.position = camera.pos;
+            skybox.position = Camera.pos;
             skybox.draw(XS_SPHERE);
             glBindTexture(GL_TEXTURE_2D, 0);
         };
@@ -87,9 +82,9 @@ void XsLib::Start() {
                         const GLenum _gl = f_GLenum(i._gl_vert);
                         const XsShape _ts = i.Shape();
                         for (volatile size_t j = 0; j < i.Array.limit; j++) {
-                            i.Shape().pos += i.Array.pos.x;
-                            i.Shape().rot += i.Array.rot.x;
-                            i.Shape().scale += i.Array.scale.x;
+                            i.Shape().pos += i.Array.pos;
+                            i.Shape().rot += i.Array.rot;
+                            i.Shape().scale += i.Array.scale;
                             glLoadIdentity();
                             i.Shape().draw(*vertices[i._selected_vert - 2].vr, _xs, _gl);
                         }
@@ -101,9 +96,9 @@ void XsLib::Start() {
                         const GLenum _gl = f_GLenum(i._gl_vert);
                         const XsShape _ts = i.Shape();
                         for (volatile size_t j = 0; j < i.Array.limit; j++) {
-                            i.Shape().pos += i.Array.pos.x;
-                            i.Shape().rot += i.Array.rot.x;
-                            i.Shape().scale += i.Array.scale.x;
+                            i.Shape().pos += i.Array.pos;
+                            i.Shape().rot += i.Array.rot;
+                            i.Shape().scale += i.Array.scale;
                             glLoadIdentity();
                             i.Shape().draw(*vertices[i._selected_vert - 2].vr, _xs, _gl);
                         }
@@ -127,9 +122,9 @@ void XsLib::Start() {
                         const XsEnum _xs = f_XsEnum(i._xs_vert);
                         const XsShape _ts = i.Shape();
                         for (volatile size_t j = 0; j < i.Array.limit; j++) {
-                            i.Shape().pos += i.Array.pos.x;
-                            i.Shape().rot += i.Array.rot.x;
-                            i.Shape().scale += i.Array.scale.x;
+                            i.Shape().pos += i.Array.pos;
+                            i.Shape().rot += i.Array.rot;
+                            i.Shape().scale += i.Array.scale;
                             glLoadIdentity();
                             i.Shape().draw(f_SolidType(i._selected_solid), f_XsEnum(i._xs_vert));
                         }
@@ -140,9 +135,9 @@ void XsLib::Start() {
                         const XsEnum _xs = f_XsEnum(i._xs_vert);
                         const XsShape _ts = i.Shape();
                         for (volatile size_t j = 0; j < i.Array.limit; j++) {
-                            i.Shape().pos += i.Array.pos.x;
-                            i.Shape().rot += i.Array.rot.x;
-                            i.Shape().scale += i.Array.scale.x;
+                            i.Shape().pos += i.Array.pos;
+                            i.Shape().rot += i.Array.rot;
+                            i.Shape().scale += i.Array.scale;
                             glLoadIdentity();
                             i.Shape().draw(f_SolidType(i._selected_solid), f_XsEnum(i._xs_vert));
                         }
@@ -162,7 +157,7 @@ void XsLib::Start() {
         if (game_mode)
             xsui();
 
-        ImGui::SFML::Update(window, imclock.restart());
+        ImGui::SFML::Update(Window, imclock.restart());
 
         if (game_mode) {
             ui();
@@ -179,7 +174,7 @@ void XsLib::Start() {
             };
 
         ImGui::Begin("RunButton", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
-        ImGui::SetWindowPos({ camera.viewport.x / 2, -5 });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2, -5 });
         ImGui::SetWindowSize({ 70, 70 });
         if (game_mode) {
             t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsDarkGreen.x, XsDarkGreen.y, XsDarkGreen.z, 0.726);
@@ -196,10 +191,10 @@ void XsLib::Start() {
         *t_nthm = _thm;
         ImGui::End();
 
-        window.pushGLStates();
-        ImGui::SFML::Render(window);
-        window.popGLStates();
-        window.display();
+        Window.pushGLStates();
+        ImGui::SFML::Render(Window);
+        Window.popGLStates();
+        Window.display();
         if (fps_tm.getMilliSeconds() > 0.1) {
             fps_tm.restart();
             fps = (float)1e9 / (float)std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - s_fps).count();
