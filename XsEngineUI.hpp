@@ -1,11 +1,11 @@
 void XsLib::ui() {
     ImGui::Begin("general settings", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
-    ImGui::SetWindowPos({ camera.viewport.x / left_panel_size.x, -5 });
+    ImGui::SetWindowPos({ Camera.viewport.x / left_panel_size.x, -5 });
     ImGui::SetWindowSize({ 300, 200 });
     ImGui::Text(WindowName);
     if (show_cam_info) {
-        ImGui::Text(std::string(std::string("pos x: ") + std::to_string(int(camera.pos.x)) + " y: " + std::to_string(int(camera.pos.y)) + " z: " + std::to_string(int(camera.pos.z))).c_str());
-        ImGui::Text(std::string(std::string("rot x: ") + std::to_string(camera.rot.x) + " y: " + std::to_string(camera.rot.y) + " z: " + std::to_string(camera.rot.z)).c_str());
+        ImGui::Text(std::string(std::string("pos x: ") + std::to_string(int(Camera.pos.x)) + " y: " + std::to_string(int(Camera.pos.y)) + " z: " + std::to_string(int(Camera.pos.z))).c_str());
+        ImGui::Text(std::string(std::string("rot x: ") + std::to_string(Camera.rot.x) + " y: " + std::to_string(Camera.rot.y) + " z: " + std::to_string(Camera.rot.z)).c_str());
     };
     if (show_cam_speed)
         ImGui::Text(std::string(std::string("camera speed: ") + str(speed_x)).c_str());
@@ -26,12 +26,12 @@ void XsLib::ui() {
     ImGui::EndMenuBar();
     ImGui::SetWindowPos({ 0, 0 });
     *t_nthm = _thm;
-    ImGui::SetWindowSize({ camera.viewport.x / left_panel_size.x, camera.viewport.y });
+    ImGui::SetWindowSize({ Camera.viewport.x / left_panel_size.x, Camera.viewport.y });
     if (l_panel_menu == 0) {
         t_nthm->Colors[ImGuiCol_Button] = ImVec4(0.12f, 0.10f, 0.21f, 1.00f);
         t_nthm->Colors[ImGuiCol_ButtonActive] = ImVec4(0.45f, 0.31f, 0.85f, 1.00f);
         t_nthm->Colors[ImGuiCol_ButtonHovered] = ImVec4(0.37f, 0.17f, 0.69f, 1.00f);
-        if (ImGui::Button("New", { camera.viewport.x / left_panel_size.x - 15, 0 })) {
+        if (ImGui::Button("New", { Camera.viewport.x / left_panel_size.x - 15, 0 })) {
             selected.type = "new";
             ImGuiFileDialog::Instance()->Close();
             selected.num = -1;
@@ -177,7 +177,7 @@ void XsLib::ui() {
         *t_nthm = _thm;
         if (ImGui::Button("Save", { ImGui::GetWindowSize().x - 15, 0 }))
             if (loaded_file != "")
-                save(loaded_file.c_str());
+                Save(loaded_file.c_str());
             else
                 ImGuiFileDialog::Instance()->OpenDialog("SaveFile", "Choose File", ".save,.xs.save", ".");
         if (ImGui::Button("Load File", { ImGui::GetWindowSize().x - 15, 0 }))
@@ -187,7 +187,7 @@ void XsLib::ui() {
             if (ImGuiFileDialog::Instance()->IsOk())
             {
                 loaded_file = ImGuiFileDialog::Instance()->GetFilePathName();
-                save(loaded_file.c_str());
+                Save(loaded_file.c_str());
             };
             ImGuiFileDialog::Instance()->Close();
             if (XsIsKeyPressed(XS_KEY_ESC))
@@ -198,7 +198,7 @@ void XsLib::ui() {
             if (ImGuiFileDialog::Instance()->IsOk())
             {
                 loaded_file = ImGuiFileDialog::Instance()->GetFilePathName();
-                load(loaded_file.c_str());
+                Load(loaded_file.c_str());
             };
             ImGuiFileDialog::Instance()->Close();
             if (XsIsKeyPressed(XS_KEY_ESC))
@@ -208,7 +208,7 @@ void XsLib::ui() {
     ImGui::End();
     if (selected.type == "delete") {
         ImGui::Begin(std::string(std::string(WindowName) + "    ").c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         ImGui::SetWindowSize({ 350, 130 });
         ImGui::Text("A shape will be deleted, do you confirm?");
         ImGui::Text(" ");
@@ -233,8 +233,8 @@ void XsLib::ui() {
     };
     if (selected_r.type == "shape") {
         ImGui::Begin(shapes[selected_r.num].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-        ImGui::SetWindowPos({ camera.viewport.x - ImGui::GetWindowSize().x, 0 });
-        ImGui::SetWindowSize({ camera.viewport.x / right_panel_size.x, camera.viewport.y });
+        ImGui::SetWindowPos({ Camera.viewport.x - ImGui::GetWindowSize().x, 0 });
+        ImGui::SetWindowSize({ Camera.viewport.x / right_panel_size.x, Camera.viewport.y });
         ImGui::InputText("Name", &shapes[selected_r.num].name);
         XsInfo(shapes[selected_r.num].Shape());
         if (vertices.size() > 0) {
@@ -305,11 +305,11 @@ void XsLib::ui() {
     }
     elif(selected_r.type == "sett") {
         ImGui::Begin("Settings", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-        ImGui::SetWindowPos({ camera.viewport.x - ImGui::GetWindowSize().x, 0 });
-        ImGui::SetWindowSize({ camera.viewport.x / right_panel_size.x, camera.viewport.y });
-        ImGui::DragFloat3("Cam Position", camera.pos, 0.01f, -FLT_MAX, FLT_MAX);
+        ImGui::SetWindowPos({ Camera.viewport.x - ImGui::GetWindowSize().x, 0 });
+        ImGui::SetWindowSize({ Camera.viewport.x / right_panel_size.x, Camera.viewport.y });
+        ImGui::DragFloat3("Cam Position", Camera.pos, 0.01f, -FLT_MAX, FLT_MAX);
         ImGui::DragFloat2("Cam Rotation", cam_rot, 0.1f, -FLT_MAX, FLT_MAX);
-        ImGui::DragFloat("Cam Far Panel", &camera.far_, 0.01f, -FLT_MAX, FLT_MAX);
+        ImGui::DragFloat("Cam Far Panel", &Camera.far_, 0.01f, -FLT_MAX, FLT_MAX);
         ImGui::Checkbox("Show Floor", &show_floor);
         ImGui::ColorPicker3("Background Color", them == 0 ? bgColorDark : bgColorLight);
         if (ImGui::Button("Reset Background Color", { ImGui::GetWindowSize().x - 15, 0 }))
@@ -352,7 +352,7 @@ void XsLib::ui() {
     };
     if (selected.type == "vert") {
         ImGui::Begin(vertices[selected.num].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         ImGui::SetWindowSize({ 250, 150 });
         ImGui::InputText("Filename", &input_text);
         if (ImGui::Button("Open File Browser", { 230, 0 })) {
@@ -402,7 +402,7 @@ void XsLib::ui() {
     }
     elif(selected.type == "tex") {
         ImGui::Begin(textures[selected.num].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         if (textures[selected.num].tx->isLoad()) {
             ImGui::SetWindowSize({ 250, 510 });
             XsInfo(*textures[selected.num].tx);
@@ -479,7 +479,7 @@ void XsLib::ui() {
     }
     elif(selected.type == "coll") {
         ImGui::Begin(colls[selected.num].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         ImGui::SetWindowSize({ 250, 120 });
         XsInfo(colls[selected.num].cl);
         t_nthm->Colors[ImGuiCol_Button] = ImVec4(XsRed.x, XsRed.y, XsRed.z, 0.726);
@@ -509,7 +509,7 @@ void XsLib::ui() {
     }
     elif(selected.type == "shader") {
         ImGui::Begin(shaders[selected.num].name.c_str(), (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         ImGui::SetWindowSize({ 250, 240 });
         ImGui::InputText("File Name vs", &shaders[selected.num].file_name_vs);
         t_nthm->Colors[ImGuiCol_Button] = ImVec4(0.12f, 0.10f, 0.21f, 0.60f);
@@ -576,7 +576,7 @@ void XsLib::ui() {
     }
     elif(selected.type == "export array") {
         ImGui::Begin("Array to Vert", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         ImGui::SetWindowSize({ 250, 90 });
         ImGui::InputText("Name", &export_array_name);
         if (ImGui::Button("Create")) {
@@ -610,7 +610,7 @@ void XsLib::ui() {
     logpanel();
     if (selected.type == "new") {
         ImGui::Begin("New ", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         ImGui::SetWindowSize({ 250, 205 });
         if (ImGui::Button("3D Shape  ", { 235, 0 })) {
             if (XsIsKeyPressed(XS_KEY_SHIFT)) {
@@ -660,7 +660,7 @@ void XsLib::ui() {
     };
     if (selected.type == "new shape") {
         ImGui::Begin("New 3D Shape", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         ImGui::SetWindowSize({ 250, 160 });
         ImGui::InputText("Name", &nw_st.name);
         _tsv = &shape_name[0];
@@ -689,7 +689,7 @@ void XsLib::ui() {
     }
     elif(selected.type == "new vert") {
         ImGui::Begin("New Vertices", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         ImGui::SetWindowSize({ 250, 160 });
         ImGui::InputText("Name", &nw_vt.name);
         _tsv = new char* [vert_name.size() - 1];
@@ -718,7 +718,7 @@ void XsLib::ui() {
     }
     elif(selected.type == "new tex") {
         ImGui::Begin("New Texture", (bool*)0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         ImGui::SetWindowSize({ 250, 160 });
         ImGui::InputText("Name", &nw_tt.name);
         _tsv = &tex_name[0];
@@ -744,7 +744,7 @@ void XsLib::ui() {
     }
     elif(selected.type == "new coll") {
         ImGui::Begin("New Collission");
-        ImGui::SetWindowPos({ camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
+        ImGui::SetWindowPos({ Camera.viewport.x / 2 - (ImGui::GetWindowSize().x / 2), Camera.viewport.y / 2 - (ImGui::GetWindowSize().y / 2) });
         ImGui::SetWindowSize({ 250, 160 });
         ImGui::InputText("Name", &nw_ct.name);
         _tsv = &coll_name[0];
