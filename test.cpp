@@ -13,10 +13,10 @@ void myfunc() {
 
 int main() {
     engine.Create("oyun motoru");
+    engine.Load("new_proj.xs.save");
     // after creating engine
     XsVertices cube_vert = XsOBJLoader("data/magic.obj", XS_VERTEX);
     XsTextureSTB tex("data/pattern32.png");
-    engine.load("new_proj.xs.save");
     engine << v;
     engine << tex;
     engine << cube_vert;
