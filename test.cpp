@@ -1,27 +1,37 @@
-#define _CRT_SECURE_NO_WARNINGS
-#include <XsEngine.hpp>
-XsLib engine;
-XsShape v;
-
+/*
+Start: Run only program start.
+Loop:  Run code every loop.
+*/
+#define AppName "XsEngine Test" // Your Window Name.
+#define eng XsEngine
+// #define Window XsEngine.Window
 using namespace std;
 
-void myfunc() {
-    if (XsIsKeyPressed(XS_MOUSE_LEFT)) {
-        v.pos.y += 0.1;
-    };
+// auto& cam = eng.Camera["{}"];
+
+XsStart{
+	cout << "Ready!\n";
+
+	auto& Shape = eng.Shape["{}"]; // Get Shape.
+	// for (const auto& i : eng.Shape.Names()) cout << i << '\n';
+
+	/*
+	auto& Cube0 = eng.Mesh["Cube 0"];
+	Cube0 << Xs.LoadOBJ("filename.obj", Xs.Enum.VertexAndTexture);
+	Cube0.poly = Xs.Enum.VertexAndTexture;
+	Shape.setMesh("Cube 0");
+	*/
 }
 
-int main() {
-    engine.Create("oyun motoru");
-    engine.Load("new_proj.xs.save");
-    // after creating engine
-    XsVertices cube_vert = XsOBJLoader("data/magic.obj", XS_VERTEX);
-    XsTextureSTB tex("data/pattern32.png");
-    engine << v;
-    engine << tex;
-    engine << cube_vert;
-    engine.Push(myfunc, "normal");
+XsLoop{
+	if (Xs.KeyPressed(Xs.Key.Escape))
+		Window.close();
+	// XsEditorCamera(cam);
+}
 
-    engine.Start();
-    return 0;
-};
+/*
+namespace im = ImGui;
+XsImgui {
+	
+}
+*/
