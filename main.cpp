@@ -1,5 +1,4 @@
 #include <XsLib.hpp>
-#include <deque>
 #include <filesystem>
 
 using namespace std;
@@ -184,7 +183,7 @@ void main() {
 
             glBegin(GL_LINES);
             rep(m_ldis.z * m_fdis.x, 2.f)
-                if ((ceil(cam.pos.x / 2) * 2) + m_fdis.x - i != 0 or !show_axis.y)
+                if ((ceil(cam.pos.x / 2) * 2) + m_fdis.x - i != 0 or !show_axis.z)
                     Xs.Line(m_fdis.x - i, 0, m_fdis.z, m_fdis.x - i, 0, -m_fdis.z);
             glEnd();
         };
@@ -302,7 +301,13 @@ void main() {
         else
             EditorCamera(cam, 0.3f);
     };
+    const DWORD screen_width = GetSystemMetrics(SM_CXSCREEN);
+    const DWORD screen_height = GetSystemMetrics(SM_CYSCREEN);
     void once() {
+        ShowWindow(GetConsoleWindow(), SW_HIDE);
+        sf::Image win_icon;
+        win_icon.loadFromFile("data/xslogo.png");
+        window.setIcon(win_icon.getSize().x, win_icon.getSize().y, win_icon.getPixelsPtr());
         ImGui::GetIO().Fonts->Clear();
         ImGui::GetIO().Fonts->AddFontFromFileTTF("data/font.ttf", 18.f);
         ImGui::SFML::UpdateFontTexture();
@@ -320,6 +325,10 @@ void main() {
         model_icon.loadFromFile("data/3dmodel.png");
         defaultfile_icon.loadFromFile("data/defaultfile.png");
         updir_icon.loadFromFile("data/updir.png");
+        xsproj_icon.loadFromFile("data/xsproj.png");
+        header_icon.loadFromFile("data/header.png");
+        source_icon.loadFromFile("data/source.png");
+        csource_icon.loadFromFile("data/c_source.png");
         floor_shader = XsShader(floor_shader_vs, floor_shader_fs);
         im::StyleXsDark();
         them = &im::GetStyle();
@@ -357,11 +366,16 @@ void main() {
     ImGuiStyle* them = nullptr;
     ImGuiStyle cthem;
     bool redButton(const std::string& label) {
+        const auto c1 = them->Colors[ImGuiCol_Button];
+        const auto c2 = them->Colors[ImGuiCol_ButtonActive];
+        const auto c3 = them->Colors[ImGuiCol_ButtonHovered];
         them->Colors[ImGuiCol_Button] = ImVec4(Xs.Color.Red.x, Xs.Color.Red.y, Xs.Color.Red.z, 0.726);
         them->Colors[ImGuiCol_ButtonActive] = ImVec4(Xs.Color.Red.x, Xs.Color.Red.y, Xs.Color.Red.z, 0.886);
         them->Colors[ImGuiCol_ButtonHovered] = ImVec4(Xs.Color.Red.x, Xs.Color.Red.y, Xs.Color.Red.z, 0.986);
         const bool b = im::Button("Delete");
-        *them = cthem;
+        them->Colors[ImGuiCol_Button] = c1;
+        them->Colors[ImGuiCol_ButtonActive] = c2;
+        them->Colors[ImGuiCol_ButtonHovered] = c3;
         return b;
     };
     void info_shape(XsShape& v) {
@@ -432,7 +446,7 @@ void main() {
             _t.push_back(strdup_Create_New);
             const auto& _tsv = &_t[0];
             if (im::Combo("Texture ", &_XSIMVERTC_, _tsv, _t.size())) {
-                if (_XSIMVERTC_ == _t.size()-1u) {
+                if (_XSIMVERTC_ == _t.size() - 1u) {
                     XsEngine.Texture.New("Texture "s + to_string(left_tex++));
                     v.tex = XsEngine.Texture().size() - 1u;
                 }
@@ -457,15 +471,41 @@ void main() {
             im::TreePop();
         };
         redButton("Delete");
-        if (im::IsItemClicked() and im::GetIO().MouseDoubleClicked[0]) {
-            const auto n = v.name;
-            if (XsEngine.Shape.Del(Sel.num)) {
-                Sel() = NONE;
-                Sel.num = 0u;
-                log << "Delete Shape. ("s + n + ')';
+        if (im::IsItemClicked()) {
+            if (im::GetIO().MouseDoubleClicked[0]) {
+                if (!Xs.KeyPressed(Xs.Key.Shift)) {
+                    auto box = pfd::message("Delete Shape", "Do you want to delete \""s + v.name + "\" ?",
+                        pfd::choice::yes_no, pfd::icon::question).result();
+                    if (box == pfd::button::yes) {
+                        const auto n = v.name;
+                        if (XsEngine.Shape.Del(Sel.num)) {
+                            Sel() = NONE;
+                            Sel.num = 0u;
+                            log << "Delete Shape. ("s + n + ')';
+                        };
+                    };
+                }
+                else {
+                    const auto n = v.name;
+                    if (XsEngine.Shape.Del(Sel.num)) {
+                        Sel() = NONE;
+                        Sel.num = 0u;
+                        log << "Delete Shape. ("s + n + ')';
+                    };
+                };
+            }
+            else if (im::GetIO().MouseClicked[0]) {
+                if (Xs.KeyPressed(Xs.Key.Shift)) {
+                    const auto n = v.name;
+                    if (XsEngine.Shape.Del(Sel.num)) {
+                        Sel() = NONE;
+                        Sel.num = 0u;
+                        log << "Delete Shape. ("s + n + ')';
+                    };
+                };
             };
         };
-    }
+    };
     XsCamera* preview_cam = nullptr;
     bool preview_c = false;
     void info_cam(XsCamera& v) {
@@ -509,12 +549,38 @@ void main() {
         //    ImGui::EndPopup();
         //};
         redButton("Delete");
-        if (im::IsItemClicked() and im::GetIO().MouseDoubleClicked[0]) {
-            const auto n = v.name;
-            if (XsEngine.Camera.Del(Sel.num)) {
-                Sel() = NONE;
-                Sel.num = 0u;
-                log << "Delete Shape. ("s + n + ')';
+        if (im::IsItemClicked()) {
+            if (im::GetIO().MouseDoubleClicked[0]) {
+                if (!Xs.KeyPressed(Xs.Key.Shift)) {
+                    auto box = pfd::message("Delete Camera", "Do you want to delete \""s + v.name + "\" ?",
+                        pfd::choice::yes_no, pfd::icon::question).result();
+                    if (box == pfd::button::yes) {
+                        const auto n = v.name;
+                        if (XsEngine.Camera.Del(Sel.num)) {
+                            Sel() = NONE;
+                            Sel.num = 0u;
+                            log << "Delete Camera. ("s + n + ')';
+                        };
+                    };
+                }
+                else {
+                    const auto n = v.name;
+                    if (XsEngine.Camera.Del(Sel.num)) {
+                        Sel() = NONE;
+                        Sel.num = 0u;
+                        log << "Delete Camera. ("s + n + ')';
+                    };
+                };
+            }
+            else if (im::GetIO().MouseClicked[0]) {
+                if (Xs.KeyPressed(Xs.Key.Shift)) {
+                    const auto n = v.name;
+                    if (XsEngine.Camera.Del(Sel.num)) {
+                        Sel() = NONE;
+                        Sel.num = 0u;
+                        log << "Delete Camera. ("s + n + ')';
+                    };
+                };
             };
         };
     };
@@ -569,14 +635,39 @@ void main() {
             };
             im::TreePop();
         };
-
         redButton("Delete");
-        if (im::IsItemClicked() and im::GetIO().MouseDoubleClicked[0]) {
-            const auto n = v.name;
-            if (XsEngine.Mesh.Del(Sel.num)) {
-                Sel() = NONE;
-                Sel.num = 0u;
-                log << "Delete Shape. ("s + n + ')';
+        if (im::IsItemClicked()) {
+            if (im::GetIO().MouseDoubleClicked[0]) {
+                if (!Xs.KeyPressed(Xs.Key.Shift)) {
+                    auto box = pfd::message("Delete Mesh", "Do you want to delete \""s + v.name + "\" ?",
+                        pfd::choice::yes_no, pfd::icon::question).result();
+                    if (box == pfd::button::yes) {
+                        const auto n = v.name;
+                        if (XsEngine.Mesh.Del(Sel.num)) {
+                            Sel() = NONE;
+                            Sel.num = 0u;
+                            log << "Delete Mesh. ("s + n + ')';
+                        };
+                    };
+                }
+                else {
+                    const auto n = v.name;
+                    if (XsEngine.Mesh.Del(Sel.num)) {
+                        Sel() = NONE;
+                        Sel.num = 0u;
+                        log << "Delete Mesh. ("s + n + ')';
+                    };
+                };
+            }
+            else if (im::GetIO().MouseClicked[0]) {
+                if (Xs.KeyPressed(Xs.Key.Shift)) {
+                    const auto n = v.name;
+                    if (XsEngine.Mesh.Del(Sel.num)) {
+                        Sel() = NONE;
+                        Sel.num = 0u;
+                        log << "Delete Mesh. ("s + n + ')';
+                    };
+                };
             };
         };
     };
@@ -670,7 +761,7 @@ void main() {
     vector<Dir_t> directorys;
     string path = filesystem::current_path().string(), path_str;
     bool change_path = false;
-    sf::Texture folder_icon, model_icon, imagefile_icon, textfile_icon, defaultfile_icon, updir_icon;
+    sf::Texture folder_icon, model_icon, imagefile_icon, textfile_icon, xsproj_icon, header_icon, source_icon, csource_icon, defaultfile_icon, updir_icon;
     float icon_size = 1.f;
     bool preview = false;
     sf::Texture* preview_tex = nullptr;
@@ -990,7 +1081,7 @@ void main() {
                     }
                 }
                 else {
-                    ImGui::ImageButton((i.path.ends_with(".png") or i.path.ends_with(".jpg") or i.path.ends_with(".jpeg")) ? imagefile_icon : i.path.ends_with(".obj") ? model_icon : i.path.ends_with(".txt") ? textfile_icon : defaultfile_icon, { 93 * icon_size, 90 * icon_size });
+                    ImGui::ImageButton((i.path.ends_with(".png") or i.path.ends_with(".jpg") or i.path.ends_with(".jpeg")) ? imagefile_icon : i.path.ends_with(".obj") ? model_icon : i.path.ends_with(".txt") ? textfile_icon : i.path.ends_with(".xs") ? xsproj_icon : (i.path.ends_with(".hpp") or i.path.ends_with(".h") or i.path.ends_with(".hxx")) ? header_icon : (i.path.ends_with(".cpp") or i.path.ends_with(".cxx")) ? source_icon : i.path.ends_with(".c") ? csource_icon : defaultfile_icon, { 93 * icon_size, 90 * icon_size });
                     if (ImGui::IsItemHovered()) {
                         if (ImGui::IsMouseDoubleClicked(0)) {
                             if (i.path.ends_with(".txt"))
@@ -999,7 +1090,16 @@ void main() {
                                 preview = true;
                                 preview_tex = new sf::Texture();
                                 preview_tex->loadFromFile(i.path);
+                            }
+                            else if (i.path.ends_with(".xs")) {
+                                auto box = pfd::message("Load Project", "Do you want to load \""s + i.path.substr(i.path.find_last_of("/\\") + 1) + "\" project?",
+                                    pfd::choice::yes_no, pfd::icon::question).result();
+                                if (box == pfd::button::yes) {
+                                    type_load = true;
+                                    load_filepath = i.path;
+                                };
                             };
+
                         }
                         ImGui::BeginTooltip();
                         ImGui::Text(i.path.c_str());
@@ -1145,9 +1245,25 @@ void main() {
 
             //window.clear();
             //sf_gui();
+            
+            /*
+            glViewport(0.0f, 0.0f, wn_size.x, wn_size.y);
+            glScissor(0.0f, 0.0f, wn_size.x, wn_size.y);
+            glLoadIdentity();
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+            glOrtho(0, wn_size.x, wn_size.y, 0, -1, 1);
+            glMatrixMode(GL_MODELVIEW);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glDisable(GL_CULL_FACE);
+            glDisable(GL_DEPTH_TEST);
+            glEnable(GL_SCISSOR_TEST);
+            glDisable(GL_LIGHTING);
+            */
 
             ImBlock(window) {
-                im::ShowDemoWindow();
+                //im::ShowDemoWindow();
                 ui();
                 //if (ImGuiFileDialog::Instance()->Display("Load Project")) {
                 //    if (ImGuiFileDialog::Instance()->IsOk())
