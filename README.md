@@ -45,7 +45,7 @@ XsImgui {
 ```
 [----------------------------------------------------------------------------------------------------------------]
 
-v0.1.2
+v0.1.2 (click image to view youtube video)
 [![screenshot](https://github.com/TYSON-Alii/XsLib-Game-Engine/blob/ef7c003492d179dba34556d050389a8f4c43b3e8/screenshots-archive/v0.1.2.png)](https://youtu.be/JMr-2NK0lyM)
 [----------------------------------------------------------------------------------------------------------------]
 
