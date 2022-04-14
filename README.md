@@ -10,39 +10,31 @@ Start: Run only program start.
 Loop:  Run code every loop.
 */
 #define AppName "XsEngine Test" // Your Window Name.
-#define eng XsEngine
-// #define Window XsEngine.Window
+// #define win eng.Window
 using namespace std;
 
-// auto& cam = eng.Camera["{}"];
+var cam = eng.Cam;
 
 XsStart{
-	cout << "Ready!\n";
+	print("Ready!\n");
 
-	auto& Shape = eng.Shape["{}"]; // Get Shape.
-	// for (const auto& i : eng.Shape.Names()) cout << i << '\n';
-
-	/*
-	auto& Cube0 = eng.Mesh["Cube 0"];
-	Cube0 << Xs.LoadOBJ("filename.obj", Xs.Enum.VertexAndTexture);
-	Cube0.poly = Xs.Enum.VertexAndTexture;
-	Shape.setMesh("Cube 0");
-	*/
-}
+	var Shape = eng.Shape("{}"); // Get Shape.
+	var Cube = eng.Mesh("Cube 0");
+	Cube = Xs.LoadOBJ("filename.obj");
+	Shape.mesh = &Cube;
+};
 
 XsLoop{
-	if (Xs.KeyPressed(Xs.Key.Escape))
-		Window.close();
+	if (Xs.Key.Pressed(Xs.Key.Escape))
+		win.close();
 	// XsEditorCamera(cam);
-}
-
-/*
-namespace im = ImGui;
-XsImgui {
-	
-}
-*/
+};
 ```
+[----------------------------------------------------------------------------------------------------------------]
+
+v0.1.3
+![screenshot](https://github.com/TYSON-Alii/XsLib-Game-Engine/blob/4326df157c9a54eb605b33a48223e1cae609fdb2/screenshots-archive/v0.1.3.png)
+![screenshot](https://github.com/TYSON-Alii/XsLib-Game-Engine/blob/4326df157c9a54eb605b33a48223e1cae609fdb2/screenshots-archive/v0.1.3-2.png)
 [----------------------------------------------------------------------------------------------------------------]
 
 v0.1.2 (click image to view youtube video)
